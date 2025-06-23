@@ -9,10 +9,11 @@ END $$;
 CREATE TABLE IF NOT EXISTS profiles (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   display_name TEXT UNIQUE NOT NULL,
-  avatar_url TEXT,
+  avatar_id TEXT DEFAULT 'cat',
   currency TEXT DEFAULT 'USD',
   timezone TEXT DEFAULT 'UTC',
   paycheck_frequency paycheck_frequency DEFAULT 'bi-weekly',
+  has_completed_welcome BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
