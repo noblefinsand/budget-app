@@ -19,15 +19,37 @@ export const profileService = {
 
   // Update current user's profile
   async updateProfile(updates: ProfileUpdate): Promise<Profile | null> {
+    // Get the current user's ID
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.error('No authenticated user found');
+      return null;
+    }
+
+    // Update the profile in the profiles table
     const { data, error } = await supabase
       .from('profiles')
       .update(updates)
+      .eq('id', user.id)
       .select()
       .single();
 
     if (error) {
       console.error('Error updating profile:', error);
       return null;
+    }
+
+    // If display_name was updated, also update the auth user metadata
+    if (updates.display_name) {
+      const { error: authError } = await supabase.auth.updateUser({
+        data: { display_name: updates.display_name }
+      });
+
+      if (authError) {
+        console.error('Error updating auth user metadata:', authError);
+        // Don't return null here as the profile was updated successfully
+      }
     }
 
     return data;
