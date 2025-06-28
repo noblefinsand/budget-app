@@ -1,13 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
 import { profileService } from '../services/profileService';
-import type { Profile, ProfileUpdate, PaycheckFrequency } from '../types/profile';
+import type { ProfileUpdate } from '../types/profile';
 import { Link } from 'react-router-dom';
 import AvatarSelector from '../components/AvatarSelector';
 
 export default function Settings() {
-  const { user } = useAuth();
-  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -28,7 +25,6 @@ export default function Settings() {
     try {
       const profileData = await profileService.getProfile();
       if (profileData) {
-        setProfile(profileData);
         setFormData({
           display_name: profileData.display_name || '',
           avatar_id: profileData.avatar_id || 'cat',
@@ -68,7 +64,6 @@ export default function Settings() {
     try {
       const updatedProfile = await profileService.updateProfile(formData);
       if (updatedProfile) {
-        setProfile(updatedProfile);
         setMessage({ type: 'success', text: 'Settings saved successfully!' });
       } else {
         setMessage({ type: 'error', text: 'Failed to save settings' });
