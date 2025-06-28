@@ -55,6 +55,12 @@ export default function Dashboard() {
                 <span className="text-gray-300">Welcome, {displayName}</span>
               </div>
               <Link
+                to="/expenses"
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+              >
+                Expenses
+              </Link>
+              <Link
                 to="/settings"
                 className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
               >
