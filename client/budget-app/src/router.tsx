@@ -6,6 +6,7 @@ import Dashboard from "./pages/Dashboard.tsx";
 import Settings from "./pages/Settings.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import { useAuth } from "./context/AuthContext";
+import Expenses from "./pages/Expenses.tsx";
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -85,6 +86,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Dashboard />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/expenses",
+    element: (
+      <ProtectedRoute>
+        <Expenses />
       </ProtectedRoute>
     ),
   },
