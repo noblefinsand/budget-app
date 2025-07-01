@@ -5,9 +5,11 @@ import { useState, useEffect } from 'react';
 import { profileService } from '../services/profileService';
 import { expenseService } from '../services/expenseService';
 import type { Profile } from '../types/profile';
-import type { Expense } from '../types/expense';
+import type { Expense, ExpenseCategory, RecurringFrequency } from '../types/expense';
 import WelcomeModal from '../components/WelcomeModal';
 import ExpenseCalendar from '../components/ExpenseCalendar';
+import ExpenseViewModal from '../components/ExpenseViewModal';
+import CategorySelect from '../components/CategorySelect';
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -15,6 +17,30 @@ export default function Dashboard() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [form, setForm] = useState<{
+    name: string;
+    amount: number;
+    due_date: string;
+    category: ExpenseCategory;
+    is_recurring: boolean;
+    recurring_frequency: RecurringFrequency | undefined;
+    notes: string;
+    excluded_from_paycheck: boolean;
+  }>({
+    name: '',
+    amount: 0,
+    due_date: '',
+    category: 'other',
+    is_recurring: false,
+    recurring_frequency: undefined,
+    notes: '',
+    excluded_from_paycheck: false
+  });
+  const [formError, setFormError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const displayName = user?.user_metadata?.display_name || user?.email;
 
@@ -59,10 +85,92 @@ export default function Dashboard() {
     loadProfile();
   };
 
-  const handleExpenseClick = () => {
-    // Navigate to expenses page with the specific expense highlighted
-    // For now, just navigate to expenses page
-    window.location.href = '/expenses';
+  const handleExpenseClick = (expense: Expense) => {
+    setSelectedExpense(expense);
+  };
+
+  const handleCloseModal = () => setSelectedExpense(null);
+
+  const handleEditExpense = (expense: Expense) => {
+    setSelectedExpense(null);
+    setEditingExpense(expense);
+    setForm({
+      name: expense.name,
+      amount: expense.amount,
+      due_date: expense.due_date,
+      category: expense.category,
+      is_recurring: expense.is_recurring,
+      recurring_frequency: expense.recurring_frequency || undefined,
+      notes: expense.notes || '',
+      excluded_from_paycheck: expense.excluded_from_paycheck
+    });
+    setShowEditModal(true);
+  };
+
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    if (type === 'checkbox') {
+      setForm(prev => ({
+        ...prev,
+        [name]: (e.target as HTMLInputElement).checked
+      }));
+    } else {
+      setForm(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+  };
+
+  const handleCategoryChange = (category: ExpenseCategory) => {
+    setForm(prev => ({
+      ...prev,
+      category
+    }));
+  };
+
+  const closeEditModal = () => {
+    setShowEditModal(false);
+    setEditingExpense(null);
+    setForm({
+      name: '',
+      amount: 0,
+      due_date: '',
+      category: 'other',
+      is_recurring: false,
+      recurring_frequency: undefined,
+      notes: '',
+      excluded_from_paycheck: false
+    });
+    setFormError(null);
+  };
+
+  const handleSave = async () => {
+    setFormError(null);
+    if (!form.name.trim() || !form.amount || !form.due_date || !form.category) {
+      setFormError('Please fill in all required fields.');
+      return;
+    }
+    if (form.is_recurring && !form.recurring_frequency) {
+      setFormError('Please select a recurring frequency.');
+      return;
+    }
+    setSaving(true);
+    if (editingExpense) {
+      const updatedExpense = await expenseService.updateExpense(editingExpense.id, {
+        ...form,
+        amount: Number(form.amount),
+        category: form.category,
+        recurring_frequency: form.is_recurring ? form.recurring_frequency : undefined
+      });
+      if (updatedExpense) {
+        setExpenses(prev => prev.map(exp => exp.id === editingExpense.id ? updatedExpense : exp));
+        closeEditModal();
+      } else {
+        setFormError('Failed to update expense.');
+      }
+    }
+    setSaving(false);
   };
 
   return (
@@ -132,10 +240,130 @@ export default function Dashboard() {
         </div>
       </main>
 
+      <ExpenseViewModal
+        expense={selectedExpense}
+        isOpen={!!selectedExpense}
+        onClose={handleCloseModal}
+        onEdit={handleEditExpense}
+        currency={profile?.currency || 'USD'}
+      />
       <WelcomeModal 
         isOpen={showWelcomeModal} 
         onComplete={handleWelcomeComplete}
       />
+      {/* Edit Expense Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold text-white mb-4">Edit Expense</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-gray-300 mb-1">Name *</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={form.name}
+                  onChange={handleFormChange}
+                  className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-300 mb-1">Amount *</label>
+                <input
+                  type="number"
+                  name="amount"
+                  value={form.amount}
+                  onChange={handleFormChange}
+                  className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-300 mb-1">Due Date *</label>
+                <input
+                  type="date"
+                  name="due_date"
+                  value={form.due_date}
+                  onChange={handleFormChange}
+                  className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <CategorySelect
+                  value={form.category}
+                  onChange={handleCategoryChange}
+                  label="Category *"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  name="is_recurring"
+                  checked={form.is_recurring}
+                  onChange={handleFormChange}
+                  className="form-checkbox h-4 w-4 text-blue-600"
+                />
+                <label className="text-gray-300">Recurring</label>
+              </div>
+              {form.is_recurring && (
+                <div>
+                  <label className="block text-gray-300 mb-1">Frequency *</label>
+                  <select
+                    name="recurring_frequency"
+                    value={form.recurring_frequency || ''}
+                    onChange={handleFormChange}
+                    className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select frequency</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="bi-weekly">Bi-weekly</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="yearly">Yearly</option>
+                  </select>
+                </div>
+              )}
+              <div>
+                <label className="block text-gray-300 mb-1">Notes</label>
+                <input
+                  type="text"
+                  name="notes"
+                  value={form.notes}
+                  onChange={handleFormChange}
+                  className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  name="excluded_from_paycheck"
+                  checked={form.excluded_from_paycheck}
+                  onChange={handleFormChange}
+                  className="form-checkbox h-4 w-4 text-blue-600"
+                />
+                <label className="text-gray-300">Exclude from paycheck calculation</label>
+              </div>
+              {formError && <div className="text-red-400 text-sm">{formError}</div>}
+            </div>
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={closeEditModal}
+                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium"
+                disabled={saving}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className="ml-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
+                disabled={saving}
+              >
+                {saving ? 'Saving...' : 'Update'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

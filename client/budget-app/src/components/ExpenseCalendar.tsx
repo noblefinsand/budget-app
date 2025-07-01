@@ -5,6 +5,7 @@ import { format, parse, startOfWeek, getDay, parseISO } from 'date-fns';
 import type { Expense } from '../types/expense';
 import { CATEGORY_COLORS } from '../types/expense';
 import { profileService } from '../services/profileService';
+import React from 'react';
 
 // Import calendar styles
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -61,8 +62,6 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
       // Parse the date string and create a local date to avoid timezone issues
       const dueDate = parseISO(expense.due_date);
       
-
-      
       return {
         id: expense.id,
         title: `${expense.name} - ${formatCurrency(expense.amount)}`,
@@ -106,8 +105,6 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
         const newDate = new Date(currentDate);
         if (currentView === Views.MONTH) {
           newDate.setMonth(newDate.getMonth() - 1);
-        } else if (currentView === Views.WEEK) {
-          newDate.setDate(newDate.getDate() - 7);
         } else if (currentView === Views.DAY) {
           newDate.setDate(newDate.getDate() - 1);
         }
@@ -116,8 +113,6 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
         const newDate = new Date(currentDate);
         if (currentView === Views.MONTH) {
           newDate.setMonth(newDate.getMonth() + 1);
-        } else if (currentView === Views.WEEK) {
-          newDate.setDate(newDate.getDate() + 7);
         } else if (currentView === Views.DAY) {
           newDate.setDate(newDate.getDate() + 1);
         }
@@ -170,16 +165,6 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
           Month
         </button>
         <button
-          onClick={() => handleViewChange(Views.WEEK)}
-          className={`px-3 py-1 rounded transition-colors ${
-            currentView === Views.WEEK 
-              ? 'bg-blue-600 text-white' 
-              : 'bg-gray-700 hover:bg-gray-600 text-white'
-          }`}
-        >
-          Week
-        </button>
-        <button
           onClick={() => handleViewChange(Views.DAY)}
           className={`px-3 py-1 rounded transition-colors ${
             currentView === Views.DAY 
@@ -202,7 +187,7 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
         startAccessor="start"
         endAccessor="end"
         style={{ height: 600 }}
-        views={['month', 'week', 'day']}
+        views={['month', 'day']}
         view={currentView}
         date={currentDate}
         onView={(view) => setCurrentView(view)}
@@ -241,7 +226,7 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
          }
          .expense-calendar .rbc-date-cell {
            color: white;
-           padding: 4px;
+           padding: 4px 4px 8px 4px; /* 4px bottom padding to ensure bottom pill is visible */
          }
          .expense-calendar .rbc-off-range-bg {
            background-color: #374151;
@@ -256,9 +241,20 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
            background-color: transparent;
            border: none;
            padding: 0;
+           height: 20px;
+           overflow: hidden;
+           border-radius: 6px;
          }
          .expense-calendar .rbc-event-content {
            padding: 0;
+           height: 20px;
+           display: flex;
+           align-items: center;
+           overflow: hidden;
+           text-overflow: ellipsis;
+           white-space: nowrap;
+           padding-left: 6px;
+           padding-right: 6px;
          }
          .expense-calendar .rbc-show-more {
            color: #3b82f6 !important;
