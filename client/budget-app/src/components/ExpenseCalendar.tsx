@@ -77,7 +77,7 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
       <span className="font-semibold truncate text-xs flex-1">{event.resource.name}</span>
       <span className="opacity-90 text-xs ml-1">{formatCurrency(event.resource.amount)}</span>
       {event.resource.is_recurring && (
-        <span className="text-xs opacity-75 ml-1">🔄</span>
+        <span className="text-xs opacity-75 ml-1 hidden md:inline">🔄</span>
       )}
     </>
   );
@@ -142,132 +142,162 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
   };
 
   return (
-    <div className={`bg-gray-900 rounded-xl p-4 ${className}`}>
-      <Calendar
-        localizer={localizer}
-        events={events}
-        startAccessor="start"
-        endAccessor="end"
-        style={{ height: 600 }}
-        views={['month']}
-        view={Views.MONTH}
-        date={currentDate}
-        onView={() => {}}
-        onNavigate={(date) => setCurrentDate(date)}
-        components={{
-          event: EventComponent,
-          toolbar: CustomToolbar,
-        }}
-        eventPropGetter={(event) => ({
-          style: {
-            backgroundColor: event.color,
-            color: '#fff',
-            border: '1px solid rgba(255,255,255,0.2)',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            boxSizing: 'border-box',
-            display: 'flex',
-            alignItems: 'center',
-            padding: '4px 8px',
-          },
-        })}
-        onSelectEvent={(event) => onEventClick?.(event.resource)}
-        className="expense-calendar"
-        dayLayoutAlgorithm="no-overlap"
-        popup={true}
-      />
-      
-             {/* Custom CSS for dark theme */}
-       <style>{`
-         .expense-calendar {
-           color: white;
-         }
-         .expense-calendar .rbc-calendar {
-           background-color: #1f2937;
-           color: white;
-         }
-         .expense-calendar .rbc-header {
-           background-color: #374151;
-           color: white;
-           border-color: #4b5563;
-           padding: 8px;
-           font-weight: 600;
-         }
-         .expense-calendar .rbc-month-view {
-           border-color: #4b5563;
-         }
-         .expense-calendar .rbc-date-cell {
-           color: white;
-           padding: 4px 4px 8px 4px;
-         }
-         .expense-calendar .rbc-off-range-bg {
-           background-color: #374151;
-         }
-         .expense-calendar .rbc-off-range {
-           color: #9ca3af;
-         }
-         .expense-calendar .rbc-today {
-           background-color: #1e40af;
-         }
-         .expense-calendar .rbc-event {
-           background-color: transparent;
-           border: none;
-           padding: 0;
-           border-radius: 6px;
-         }
-         .expense-calendar .rbc-event-content {
-           padding: 0;
-           display: flex;
-           align-items: center;
-           overflow: hidden;
-           text-overflow: ellipsis;
-           white-space: nowrap;
-           padding-left: 6px;
-           padding-right: 6px;
-         }
-         .expense-calendar .rbc-show-more {
-           color: #3b82f6 !important;
-           background: transparent !important;
-           font-weight: 600;
-           border-radius: 4px;
-           padding: 2px 6px;
-           transition: background 0.2s, color 0.2s;
-           cursor: pointer;
-         }
-         .expense-calendar .rbc-show-more:hover {
-           background: #2563eb !important;
-           color: #fff !important;
-         }
-         .expense-calendar .rbc-time-view {
-           border-color: #4b5563;
-         }
-         .expense-calendar .rbc-time-header {
-           background-color: #374151;
-           border-color: #4b5563;
-         }
-         .expense-calendar .rbc-time-content {
-           border-color: #4b5563;
-         }
-         .expense-calendar .rbc-timeslot-group {
-           border-color: #4b5563;
-         }
-         .expense-calendar .rbc-time-slot {
-           border-color: #4b5563;
-         }
-         /* Custom dark theme for the popup overlay */
-         .expense-calendar .rbc-overlay {
-           background: #1f2937 !important;
-           color: #fff !important;
-           border-radius: 12px !important;
-           border: 1px solid #374151 !important;
-           box-shadow: 0 4px 24px 0 rgba(0,0,0,0.4);
-         }
-         .expense-calendar .rbc-overlay-header {
-           background: #1f2937 !important;
-           color: #fff !important;
-           border-bottom: 1px solid #374151 !important;
-         }
-       `}</style>
+    <div className={`bg-gray-900 rounded-xl p-2 sm:p-4 w-full md:max-w-5xl md:mx-auto ${className}`}>
+      <div className="w-full">
+        <Calendar
+          localizer={localizer}
+          events={events}
+          startAccessor="start"
+          endAccessor="end"
+          style={{ height: 600 }}
+          views={['month']}
+          view={Views.MONTH}
+          date={currentDate}
+          onView={() => {}}
+          onNavigate={(date) => setCurrentDate(date)}
+          components={{
+            event: EventComponent,
+            toolbar: CustomToolbar,
+          }}
+          eventPropGetter={(event) => ({
+            style: {
+              backgroundColor: event.color,
+              color: '#fff',
+              border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              boxSizing: 'border-box',
+              display: 'flex',
+              alignItems: 'center',
+              padding: '4px 8px',
+              fontSize: '1rem',
+            },
+          })}
+          onSelectEvent={(event) => onEventClick?.(event.resource)}
+          className="expense-calendar"
+          dayLayoutAlgorithm="no-overlap"
+          popup={true}
+        />
+      </div>
+      <style>{`
+        .expense-calendar {
+          color: white;
+        }
+        .expense-calendar .rbc-calendar {
+          background-color: #1f2937;
+          color: white;
+        }
+        .expense-calendar .rbc-header {
+          background-color: #374151;
+          color: white;
+          border-color: #4b5563;
+          padding: 8px;
+          font-weight: 600;
+          font-size: 1rem;
+        }
+        .expense-calendar .rbc-month-view {
+          border-color: #4b5563;
+        }
+        .expense-calendar .rbc-date-cell {
+          color: white;
+          padding: 4px 4px 8px 4px;
+          font-size: 1rem;
+        }
+        .expense-calendar .rbc-off-range-bg {
+          background-color: #374151;
+        }
+        .expense-calendar .rbc-off-range {
+          color: #9ca3af;
+        }
+        .expense-calendar .rbc-today {
+          background-color: #1e40af;
+        }
+        .expense-calendar .rbc-event {
+          background-color: transparent;
+          border: none;
+          padding: 0;
+          border-radius: 6px;
+          font-size: 1rem;
+        }
+        .expense-calendar .rbc-event-content {
+          padding: 0;
+          display: flex;
+          align-items: center;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          padding-left: 6px;
+          padding-right: 6px;
+          font-size: 1rem;
+        }
+        .expense-calendar .rbc-show-more {
+          color: #3b82f6 !important;
+          background: transparent !important;
+          font-weight: 600;
+          border-radius: 4px;
+          padding: 2px 6px;
+          transition: background 0.2s, color 0.2s;
+          cursor: pointer;
+          font-size: 1rem;
+        }
+        .expense-calendar .rbc-show-more:hover {
+          background: #2563eb !important;
+          color: #fff !important;
+        }
+        .expense-calendar .rbc-time-view {
+          border-color: #4b5563;
+        }
+        .expense-calendar .rbc-time-header {
+          background-color: #374151;
+          border-color: #4b5563;
+        }
+        .expense-calendar .rbc-time-content {
+          border-color: #4b5563;
+        }
+        .expense-calendar .rbc-timeslot-group {
+          border-color: #4b5563;
+        }
+        .expense-calendar .rbc-time-slot {
+          border-color: #4b5563;
+        }
+        /* Custom dark theme for the popup overlay */
+        .expense-calendar .rbc-overlay {
+          background: #1f2937 !important;
+          color: #fff !important;
+          border-radius: 12px !important;
+          border: 1px solid #374151 !important;
+          box-shadow: 0 4px 24px 0 rgba(0,0,0,0.4);
+        }
+        .expense-calendar .rbc-overlay-header {
+          background: #1f2937 !important;
+          color: #fff !important;
+          border-bottom: 1px solid #374151 !important;
+        }
+        /* Responsive adjustments for mobile */
+        @media (max-width: 768px) {
+          .expense-calendar .rbc-header,
+          .expense-calendar .rbc-date-cell,
+          .expense-calendar .rbc-event,
+          .expense-calendar .rbc-event-content,
+          .expense-calendar .rbc-show-more {
+            font-size: 0.95rem;
+          }
+          .expense-calendar .rbc-event,
+          .expense-calendar .rbc-event-content,
+          .expense-calendar .rbc-show-more {
+            padding: 2px 6px;
+            border-radius: 5px;
+            width: 100%;
+            box-sizing: border-box;
+          }
+          .expense-calendar .rbc-header {
+            padding: 4px;
+          }
+          .expense-calendar .rbc-date-cell {
+            padding: 2px 2px 4px 2px;
+          }
+        }
+      `}</style>
     </div>
   );
 } 
