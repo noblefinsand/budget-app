@@ -1,6 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
-import type { View } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, parseISO } from 'date-fns';
 import type { Expense } from '../types/expense';
 import { CATEGORY_COLORS } from '../types/expense';
@@ -42,10 +41,9 @@ interface ExpenseCalendarProps {
 export default function ExpenseCalendar({ expenses, onEventClick, className = '' }: ExpenseCalendarProps) {
   const [currency, setCurrency] = useState('USD');
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [currentView, setCurrentView] = useState<View>(Views.MONTH);
 
   // Fetch user's currency preference
-  useMemo(() => {
+  useEffect(() => {
     const fetchCurrency = async () => {
       const profile = await profileService.getProfile();
       if (profile?.currency) setCurrency(profile.currency);
@@ -75,107 +73,71 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
 
   // Custom event component with category colors
   const EventComponent = ({ event }: { event: CalendarEvent }) => (
-    <div 
-      className="p-1 text-xs font-medium rounded cursor-pointer hover:opacity-80 transition-opacity"
-      style={{ 
-        backgroundColor: event.color,
-        color: '#ffffff',
-        border: '1px solid rgba(255, 255, 255, 0.2)',
-        height: '32px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: '1px'
-      }}
-      onClick={() => onEventClick?.(event.resource)}
-      title={`${event.resource.name} - ${formatCurrency(event.resource.amount)}`}
-    >
-      <div className="font-semibold truncate text-xs flex-1">{event.resource.name}</div>
-      <div className="opacity-90 text-xs ml-1">{formatCurrency(event.resource.amount)}</div>
+    <>
+      <span className="font-semibold truncate text-xs flex-1">{event.resource.name}</span>
+      <span className="opacity-90 text-xs ml-1">{formatCurrency(event.resource.amount)}</span>
       {event.resource.is_recurring && (
-        <div className="text-xs opacity-75 ml-1">🔄</div>
+        <span className="text-xs opacity-75 ml-1">🔄</span>
       )}
-    </div>
+    </>
   );
 
   // Custom toolbar with dark theme styling
   const CustomToolbar = (toolbar: { label: string }) => {
     const handleNavigate = (action: string) => {
+      const newDate = new Date(currentDate);
       if (action === 'PREV') {
-        const newDate = new Date(currentDate);
-        if (currentView === Views.MONTH) {
-          newDate.setMonth(newDate.getMonth() - 1);
-        } else if (currentView === Views.DAY) {
-          newDate.setDate(newDate.getDate() - 1);
-        }
+        newDate.setMonth(newDate.getMonth() - 1);
         setCurrentDate(newDate);
       } else if (action === 'NEXT') {
-        const newDate = new Date(currentDate);
-        if (currentView === Views.MONTH) {
-          newDate.setMonth(newDate.getMonth() + 1);
-        } else if (currentView === Views.DAY) {
-          newDate.setDate(newDate.getDate() + 1);
-        }
+        newDate.setMonth(newDate.getMonth() + 1);
         setCurrentDate(newDate);
       } else if (action === 'TODAY') {
         setCurrentDate(new Date());
       }
     };
 
-    const handleViewChange = (view: View) => {
-      setCurrentView(view);
-    };
-
     return (
-    <div className="flex justify-between items-center mb-4 p-4 bg-gray-800 rounded-lg">
-      <div className="flex items-center space-x-2">
-        <button
-          onClick={() => handleNavigate('PREV')}
-          className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors"
-        >
-          ‹
-        </button>
-        <button
-          onClick={() => handleNavigate('TODAY')}
-          className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
-        >
-          Today
-        </button>
-        <button
-          onClick={() => handleNavigate('NEXT')}
-          className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors"
-        >
-          ›
-        </button>
+      <div className="mb-4 p-4 bg-gray-800 rounded-lg">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => handleNavigate('PREV')}
+              className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors"
+            >
+              ‹
+            </button>
+            <button
+              onClick={() => handleNavigate('TODAY')}
+              className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+            >
+              Today
+            </button>
+            <button
+              onClick={() => handleNavigate('NEXT')}
+              className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors"
+            >
+              ›
+            </button>
+          </div>
+          <h2 className="text-xl font-semibold text-white">
+            {toolbar.label}
+          </h2>
+        </div>
+        {/* Category color key */}
+        <div className="flex flex-wrap items-center space-x-4 mt-3">
+          {Object.entries(CATEGORY_COLORS).map(([category, color]) => (
+            <div key={category} className="flex items-center space-x-1 mb-1">
+              <span
+                className="inline-block w-4 h-4 rounded-full border border-white/20 mr-1"
+                style={{ backgroundColor: color }}
+                title={category}
+              />
+              <span className="text-xs text-gray-300 capitalize">{category}</span>
+            </div>
+          ))}
+        </div>
       </div>
-      
-      <h2 className="text-xl font-semibold text-white">
-        {toolbar.label}
-      </h2>
-      
-      <div className="flex items-center space-x-2">
-        <button
-          onClick={() => handleViewChange(Views.MONTH)}
-          className={`px-3 py-1 rounded transition-colors ${
-            currentView === Views.MONTH 
-              ? 'bg-blue-600 text-white' 
-              : 'bg-gray-700 hover:bg-gray-600 text-white'
-          }`}
-        >
-          Month
-        </button>
-        <button
-          onClick={() => handleViewChange(Views.DAY)}
-          className={`px-3 py-1 rounded transition-colors ${
-            currentView === Views.DAY 
-              ? 'bg-blue-600 text-white' 
-              : 'bg-gray-700 hover:bg-gray-600 text-white'
-          }`}
-        >
-          Day
-        </button>
-      </div>
-    </div>
     );
   };
 
@@ -187,10 +149,10 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
         startAccessor="start"
         endAccessor="end"
         style={{ height: 600 }}
-        views={['month', 'day']}
-        view={currentView}
+        views={['month']}
+        view={Views.MONTH}
         date={currentDate}
-        onView={(view) => setCurrentView(view)}
+        onView={() => {}}
         onNavigate={(date) => setCurrentDate(date)}
         components={{
           event: EventComponent,
@@ -199,10 +161,20 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
         eventPropGetter={(event) => ({
           style: {
             backgroundColor: event.color,
-            border: '1px solid rgba(255, 255, 255, 0.2)',
+            color: '#fff',
+            border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            boxSizing: 'border-box',
+            display: 'flex',
+            alignItems: 'center',
+            padding: '4px 8px',
           },
         })}
+        onSelectEvent={(event) => onEventClick?.(event.resource)}
         className="expense-calendar"
+        dayLayoutAlgorithm="no-overlap"
+        popup={true}
       />
       
              {/* Custom CSS for dark theme */}
@@ -226,7 +198,7 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
          }
          .expense-calendar .rbc-date-cell {
            color: white;
-           padding: 4px 4px 8px 4px; /* 4px bottom padding to ensure bottom pill is visible */
+           padding: 4px 4px 8px 4px;
          }
          .expense-calendar .rbc-off-range-bg {
            background-color: #374151;
@@ -241,13 +213,10 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
            background-color: transparent;
            border: none;
            padding: 0;
-           height: 20px;
-           overflow: hidden;
            border-radius: 6px;
          }
          .expense-calendar .rbc-event-content {
            padding: 0;
-           height: 20px;
            display: flex;
            align-items: center;
            overflow: hidden;
@@ -284,6 +253,19 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
          }
          .expense-calendar .rbc-time-slot {
            border-color: #4b5563;
+         }
+         /* Custom dark theme for the popup overlay */
+         .expense-calendar .rbc-overlay {
+           background: #1f2937 !important;
+           color: #fff !important;
+           border-radius: 12px !important;
+           border: 1px solid #374151 !important;
+           box-shadow: 0 4px 24px 0 rgba(0,0,0,0.4);
+         }
+         .expense-calendar .rbc-overlay-header {
+           background: #1f2937 !important;
+           color: #fff !important;
+           border-bottom: 1px solid #374151 !important;
          }
        `}</style>
     </div>
