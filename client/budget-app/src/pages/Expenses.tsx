@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { expenseService } from '../services/expenseService';
 import { profileService } from '../services/profileService';
 import { Link } from 'react-router-dom';
+import ColorPicker from '../components/ColorPicker';
 import type { Expense, ExpenseCreate, RecurringFrequency, ExpenseCategory } from '../types/expense';
 
 const CATEGORIES: ExpenseCategory[] = [
@@ -25,6 +26,7 @@ export default function Expenses() {
     amount: 0,
     due_date: '',
     category: 'other',
+    color: '#3B82F6',
     is_recurring: false,
     recurring_frequency: undefined,
     notes: '',
@@ -65,6 +67,13 @@ export default function Expenses() {
         [name]: value
       }));
     }
+  };
+
+  const handleColorChange = (color: string) => {
+    setForm(prev => ({
+      ...prev,
+      color
+    }));
   };
 
   const handleSave = async () => {
@@ -120,6 +129,7 @@ export default function Expenses() {
       amount: expense.amount,
       due_date: expense.due_date,
       category: expense.category,
+      color: expense.color,
       is_recurring: expense.is_recurring,
       recurring_frequency: expense.recurring_frequency || undefined,
       notes: expense.notes || '',
@@ -160,6 +170,7 @@ export default function Expenses() {
       amount: 0,
       due_date: '',
       category: 'other',
+      color: '#3B82F6',
       is_recurring: false,
       recurring_frequency: undefined,
       notes: '',
@@ -224,7 +235,15 @@ export default function Expenses() {
                     <td className="py-2 px-2">{formatCurrency(exp.amount)}</td>
                     <td className="py-2 px-2">{exp.due_date}</td>
                     <td className="py-2 px-2">{exp.is_recurring ? exp.recurring_frequency : 'No'}</td>
-                    <td className="py-2 px-2 capitalize">{exp.category}</td>
+                    <td className="py-2 px-2">
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-4 h-4 rounded-full border border-gray-600"
+                          style={{ backgroundColor: exp.color }}
+                        />
+                        <span className="capitalize">{exp.category}</span>
+                      </div>
+                    </td>
                     <td className="py-2 px-2">
                       <div className="flex items-center gap-2">
                         <button
@@ -301,6 +320,11 @@ export default function Expenses() {
                     ))}
                   </select>
                 </div>
+                <ColorPicker
+                  value={form.color || '#3B82F6'}
+                  onChange={handleColorChange}
+                  label="Color"
+                />
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
@@ -420,6 +444,11 @@ export default function Expenses() {
                     ))}
                   </select>
                 </div>
+                <ColorPicker
+                  value={form.color || '#3B82F6'}
+                  onChange={handleColorChange}
+                  label="Color"
+                />
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"

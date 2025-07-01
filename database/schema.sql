@@ -124,4 +124,73 @@ BEGIN
   -- If not found, it's available
   RETURN TRUE;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER; 
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create expense category enum
+DO $$ BEGIN
+    CREATE TYPE expense_category AS ENUM ('housing', 'utilities', 'transportation', 'food', 'entertainment', 'healthcare', 'insurance', 'debt', 'savings', 'other');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+-- Create expense status enum
+DO $$ BEGIN
+    CREATE TYPE expense_status AS ENUM ('pending', 'paid', 'overdue');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+-- Create recurring frequency enum
+DO $$ BEGIN
+    CREATE TYPE recurring_frequency AS ENUM ('monthly', 'bi-weekly', 'weekly', 'yearly');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+-- Create expenses table
+CREATE TABLE IF NOT EXISTS expenses (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  name TEXT NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  due_date DATE NOT NULL,
+  category expense_category NOT NULL,
+  color TEXT DEFAULT '#3B82F6', -- Default blue color
+  is_recurring BOOLEAN DEFAULT FALSE,
+  recurring_frequency recurring_frequency,
+  status expense_status DEFAULT 'pending',
+  notes TEXT,
+  excluded_from_paycheck BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable Row Level Security on expenses
+ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can view own expenses" ON expenses;
+DROP POLICY IF EXISTS "Users can insert own expenses" ON expenses;
+DROP POLICY IF EXISTS "Users can update own expenses" ON expenses;
+DROP POLICY IF EXISTS "Users can delete own expenses" ON expenses;
+
+-- Create policies for expenses
+CREATE POLICY "Users can view own expenses" ON expenses
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own expenses" ON expenses
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own expenses" ON expenses
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own expenses" ON expenses
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- Drop existing trigger if it exists
+DROP TRIGGER IF EXISTS handle_expenses_updated_at ON expenses;
+
+-- Trigger to automatically update updated_at for expenses
+CREATE TRIGGER handle_expenses_updated_at
+  BEFORE UPDATE ON expenses
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at(); 
