@@ -41,6 +41,7 @@ export default function Dashboard() {
   });
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const displayName = user?.user_metadata?.display_name || user?.email;
 
@@ -175,25 +176,79 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-900">
+      {/* Mobile menu overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-60 z-40"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+      {/* Mobile slide-out menu */}
+      <div
+        className={`fixed top-0 left-0 h-full z-50 bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out
+          ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+          w-2/3 max-w-xs md:hidden flex flex-col`}
+        style={{ minWidth: 220 }}
+      >
+        <div className="flex items-center p-4 border-b border-gray-700">
+          <span className="text-white font-semibold text-lg">Budget Buddy</span>
+        </div>
+        <nav className="flex flex-col p-4 space-y-2">
+          <Link
+            to="/expenses"
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-base font-medium transition-colors duration-200"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            Expenses
+          </Link>
+          <Link
+            to="/settings"
+            className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-base font-medium transition-colors duration-200"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            Settings
+          </Link>
+          <button
+            onClick={() => { setMobileMenuOpen(false); logout(); }}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-base font-medium transition-colors duration-200 text-left"
+          >
+            Logout
+          </button>
+        </nav>
+      </div>
       <nav className="bg-gray-800 shadow-lg border-b border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <button 
-                onClick={() => {
-                  loadProfile();
-                  loadExpenses();
-                }}
-                className="text-xl font-semibold text-white hover:text-blue-400 transition-colors duration-200 cursor-pointer"
-              >
-                Budget Buddy
-              </button>
+          <div className="flex justify-between h-16 items-center">
+            {/* Hamburger for mobile */}
+            <button
+              className="md:hidden flex items-center justify-center p-2 rounded text-gray-200 hover:text-blue-400 focus:outline-none"
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open menu"
+            >
+              {/* Hamburger SVG */}
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            {/* Desktop/tablet: Budget Buddy dashboard link */}
+            <button 
+              onClick={() => {
+                loadProfile();
+                loadExpenses();
+              }}
+              className="hidden md:inline text-xl font-semibold text-white hover:text-blue-400 transition-colors duration-200 cursor-pointer"
+            >
+              Budget Buddy
+            </button>
+            {/* Mobile: avatar and username only */}
+            <div className="flex items-center space-x-3 md:hidden">
+              <Avatar avatarId={profile?.avatar_id || 'cat'} size="sm" />
+              <span className="text-white font-semibold text-lg">{displayName}</span>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-3">
-                <Avatar avatarId={profile?.avatar_id || 'cat'} size="sm" />
-                <span className="text-gray-300">Welcome, {displayName}</span>
-              </div>
+            {/* Desktop/tablet nav actions */}
+            <div className="hidden md:flex items-center space-x-4">
+              <Avatar avatarId={profile?.avatar_id || 'cat'} size="sm" />
+              <span className="text-gray-300">Welcome, {displayName}</span>
               <Link
                 to="/expenses"
                 className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
