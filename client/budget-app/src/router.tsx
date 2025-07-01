@@ -16,7 +16,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black p-4">
         <div className="text-center">
-          <h1 className="text-5xl font-bold text-white mb-3">Budget Me</h1>
+          <h1 className="text-5xl font-bold text-white mb-3">Budget Buddy</h1>
           <div className="flex justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
           </div>
@@ -40,7 +40,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black p-4">
         <div className="text-center">
-          <h1 className="text-5xl font-bold text-white mb-3">Budget Me</h1>
+          <h1 className="text-5xl font-bold text-white mb-3">Budget Buddy</h1>
           <div className="flex justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
           </div>

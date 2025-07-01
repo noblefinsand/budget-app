@@ -187,7 +187,7 @@ export default function ResetPassword() {
       <div className="w-full max-w-md">
         <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl shadow-2xl p-8">
           <div className="text-center mb-8">
-            <h1 className="text-5xl font-bold text-white mb-3">Budget Me</h1>
+            <h1 className="text-5xl font-bold text-white mb-3">Budget Buddy</h1>
             <h2 className="text-xl font-medium text-gray-300 mb-2">
               Reset Your Password
             </h2>

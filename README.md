@@ -1,4 +1,4 @@
-# Budget Me - Personal Finance Management App
+# Budget Buddy - Personal Finance Management App
 
 A modern, responsive web application for personal finance management built with React, TypeScript, and Supabase.
 
@@ -21,9 +21,9 @@ A modern, responsive web application for personal finance management built with 
 ## 📁 Project Structure
 
 ```
-Budget App/
+Budget Buddy/
 ├── client/
-│   └── budget-app/          # React frontend application
+│   └── budget-buddy/          # React frontend application
 │       ├── src/
 │       │   ├── components/  # Reusable UI components
 │       │   ├── context/     # React context providers
@@ -50,17 +50,17 @@ Budget App/
 1. **Clone the repository**
    ```bash
    git clone <your-repo-url>
-   cd "Budget App"
+   cd "Budget Buddy"
    ```
 
 2. **Install dependencies**
    ```bash
-   cd client/budget-app
+   cd client/budget-buddy
    npm install
    ```
 
 3. **Set up environment variables**
-   Create a `.env` file in `client/budget-app/`:
+   Create a `.env` file in `client/budget-buddy/`:
    ```env
    VITE_SUPABASE_URL=your_supabase_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key

@@ -1,6 +1,6 @@
 # Test Fixtures
 
-This directory contains reusable test fixtures and mocks for the budget app tests.
+This directory contains reusable test fixtures and mocks for the budget buddy tests.
 
 ## Structure
 
