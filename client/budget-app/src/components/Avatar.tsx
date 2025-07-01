@@ -17,7 +17,7 @@ export default function Avatar({ avatarId, size = 'md', className = '' }: Avatar
 
   return (
     <div
-      className={`rounded-full flex items-center justify-center ${sizeClasses[size]} ${className}`}
+      className={`rounded-full flex items-center justify-center border-2 border-gray-300/20 shadow-sm ${sizeClasses[size]} ${className}`}
       style={{ backgroundColor: avatar.bgColor }}
       title={avatar.name}
     >
