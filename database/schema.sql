@@ -155,7 +155,6 @@ CREATE TABLE IF NOT EXISTS expenses (
   amount DECIMAL(10,2) NOT NULL,
   due_date DATE NOT NULL,
   category expense_category NOT NULL,
-  color TEXT DEFAULT '#3B82F6', -- Default blue color
   is_recurring BOOLEAN DEFAULT FALSE,
   recurring_frequency recurring_frequency,
   status expense_status DEFAULT 'pending',

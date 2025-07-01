@@ -2,12 +2,11 @@ import { useEffect, useState } from 'react';
 import { expenseService } from '../services/expenseService';
 import { profileService } from '../services/profileService';
 import { Link } from 'react-router-dom';
-import ColorPicker from '../components/ColorPicker';
 import type { Expense, ExpenseCreate, RecurringFrequency, ExpenseCategory } from '../types/expense';
+import { CATEGORY_COLORS } from '../types/expense';
+import CategorySelect from '../components/CategorySelect';
 
-const CATEGORIES: ExpenseCategory[] = [
-  'housing', 'utilities', 'transportation', 'food', 'entertainment', 'healthcare', 'insurance', 'debt', 'savings', 'other'
-];
+
 const FREQUENCIES: RecurringFrequency[] = ['monthly', 'bi-weekly', 'weekly', 'yearly'];
 
 export default function Expenses() {
@@ -26,7 +25,6 @@ export default function Expenses() {
     amount: 0,
     due_date: '',
     category: 'other',
-    color: '#3B82F6',
     is_recurring: false,
     recurring_frequency: undefined,
     notes: '',
@@ -69,10 +67,10 @@ export default function Expenses() {
     }
   };
 
-  const handleColorChange = (color: string) => {
+  const handleCategoryChange = (category: ExpenseCategory) => {
     setForm(prev => ({
       ...prev,
-      color
+      category
     }));
   };
 
@@ -129,7 +127,6 @@ export default function Expenses() {
       amount: expense.amount,
       due_date: expense.due_date,
       category: expense.category,
-      color: expense.color,
       is_recurring: expense.is_recurring,
       recurring_frequency: expense.recurring_frequency || undefined,
       notes: expense.notes || '',
@@ -170,7 +167,6 @@ export default function Expenses() {
       amount: 0,
       due_date: '',
       category: 'other',
-      color: '#3B82F6',
       is_recurring: false,
       recurring_frequency: undefined,
       notes: '',
@@ -239,7 +235,7 @@ export default function Expenses() {
                       <div className="flex items-center gap-2">
                         <div 
                           className="w-4 h-4 rounded-full border border-gray-600"
-                          style={{ backgroundColor: exp.color }}
+                          style={{ backgroundColor: CATEGORY_COLORS[exp.category] }}
                         />
                         <span className="capitalize">{exp.category}</span>
                       </div>
@@ -308,23 +304,12 @@ export default function Expenses() {
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-300 mb-1">Category *</label>
-                  <select
-                    name="category"
+                  <CategorySelect
                     value={form.category}
-                    onChange={handleFormChange}
-                    className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {CATEGORIES.map(cat => (
-                      <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
-                    ))}
-                  </select>
+                    onChange={handleCategoryChange}
+                    label="Category *"
+                  />
                 </div>
-                <ColorPicker
-                  value={form.color || '#3B82F6'}
-                  onChange={handleColorChange}
-                  label="Color"
-                />
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
@@ -432,23 +417,12 @@ export default function Expenses() {
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-300 mb-1">Category *</label>
-                  <select
-                    name="category"
+                  <CategorySelect
                     value={form.category}
-                    onChange={handleFormChange}
-                    className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {CATEGORIES.map(cat => (
-                      <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
-                    ))}
-                  </select>
+                    onChange={handleCategoryChange}
+                    label="Category *"
+                  />
                 </div>
-                <ColorPicker
-                  value={form.color || '#3B82F6'}
-                  onChange={handleColorChange}
-                  label="Color"
-                />
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"

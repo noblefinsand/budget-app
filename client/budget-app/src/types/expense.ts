@@ -4,6 +4,20 @@ export type ExpenseStatus = 'pending' | 'paid' | 'overdue';
 
 export type RecurringFrequency = 'monthly' | 'bi-weekly' | 'weekly' | 'yearly';
 
+// Category color mapping
+export const CATEGORY_COLORS: Record<ExpenseCategory, string> = {
+  housing: '#3B82F6',      // Blue
+  utilities: '#EF4444',    // Red
+  transportation: '#10B981', // Green
+  food: '#F59E0B',         // Yellow
+  entertainment: '#8B5CF6', // Purple
+  healthcare: '#06B6D4',   // Cyan
+  insurance: '#EC4899',    // Pink
+  debt: '#F97316',         // Orange
+  savings: '#84CC16',      // Lime
+  other: '#6B7280'         // Gray
+};
+
 export interface Expense {
   id: string;
   user_id: string;
@@ -11,7 +25,6 @@ export interface Expense {
   amount: number;
   due_date: string;
   category: ExpenseCategory;
-  color: string;
   is_recurring: boolean;
   recurring_frequency: RecurringFrequency | null;
   status: ExpenseStatus;
@@ -26,7 +39,6 @@ export interface ExpenseCreate {
   amount: number;
   due_date: string;
   category: ExpenseCategory;
-  color?: string;
   is_recurring?: boolean;
   recurring_frequency?: RecurringFrequency;
   notes?: string;
@@ -38,7 +50,6 @@ export interface ExpenseUpdate {
   amount?: number;
   due_date?: string;
   category?: ExpenseCategory;
-  color?: string;
   is_recurring?: boolean;
   recurring_frequency?: RecurringFrequency;
   status?: ExpenseStatus;
