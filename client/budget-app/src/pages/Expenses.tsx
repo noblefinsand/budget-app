@@ -323,7 +323,7 @@ export default function Expenses() {
         {/* Add Expense Modal */}
         {showAddModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
+            <div className="bg-gray-800 rounded-xl p-6 w-full max-w-lg">
               <h2 className="text-xl font-bold text-white mb-4">Add Expense</h2>
               <div className="space-y-4">
                 <div>
@@ -436,7 +436,7 @@ export default function Expenses() {
         {/* Edit Expense Modal */}
         {showEditModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
+            <div className="bg-gray-800 rounded-xl p-6 w-full max-w-lg">
               <h2 className="text-xl font-bold text-white mb-4">Edit Expense</h2>
               <div className="space-y-4">
                 <div>
