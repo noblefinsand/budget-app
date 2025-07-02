@@ -76,7 +76,6 @@ export default function Expenses() {
 
   const handleSave = async () => {
     setFormError(null);
-    // Validation
     if (!form.name.trim() || !form.amount || !form.due_date || !form.category) {
       setFormError('Please fill in all required fields.');
       return;
@@ -88,7 +87,6 @@ export default function Expenses() {
     setSaving(true);
     
     if (editingExpense) {
-      // Update existing expense
       const updatedExpense = await expenseService.updateExpense(editingExpense.id, {
         ...form,
         amount: Number(form.amount),
@@ -103,7 +101,6 @@ export default function Expenses() {
         setFormError('Failed to update expense.');
       }
     } else {
-      // Add new expense
       const newExpense = await expenseService.addExpense({
         ...form,
         amount: Number(form.amount),
@@ -213,55 +210,113 @@ export default function Expenses() {
           ) : expenses.length === 0 ? (
             <div className="text-gray-400">No expenses yet. Add your first expense!</div>
           ) : (
-            <table className="w-full text-left text-gray-200">
-              <thead>
-                <tr>
-                  <th className="py-2 px-2">Name</th>
-                  <th className="py-2 px-2">Amount</th>
-                  <th className="py-2 px-2">Due Date</th>
-                  <th className="py-2 px-2">Recurring</th>
-                  <th className="py-2 px-2">Category</th>
-                  <th className="py-2 px-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
+            <>
+              {/* Desktop Table View (md and up) */}
+              <div className="hidden md:block">
+                <table className="w-full text-left text-gray-200">
+                  <thead>
+                    <tr>
+                      <th className="py-2 px-2">Name</th>
+                      <th className="py-2 px-2">Amount</th>
+                      <th className="py-2 px-2">Due Date</th>
+                      <th className="py-2 px-2">Recurring</th>
+                      <th className="py-2 px-2">Category</th>
+                      <th className="py-2 px-2">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {expenses.map(exp => (
+                      <tr key={exp.id} className="border-b border-gray-700 hover:bg-gray-700/30">
+                        <td className="py-2 px-2 font-medium">{exp.name}</td>
+                        <td className="py-2 px-2">{formatCurrency(exp.amount)}</td>
+                        <td className="py-2 px-2">{exp.due_date}</td>
+                        <td className="py-2 px-2">{exp.is_recurring ? exp.recurring_frequency : 'No'}</td>
+                        <td className="py-2 px-2">
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-4 h-4 rounded-full border border-gray-600"
+                              style={{ backgroundColor: CATEGORY_COLORS[exp.category] }}
+                            />
+                            <span className="capitalize">{exp.category}</span>
+                          </div>
+                        </td>
+                        <td className="py-2 px-2">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleEdit(exp)}
+                              className="text-blue-500 hover:text-blue-700"
+                              disabled={deleting === exp.id}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(exp.id)}
+                              className="text-red-500 hover:text-red-700 disabled:opacity-50"
+                              disabled={deleting === exp.id}
+                            >
+                              {deleting === exp.id ? 'Deleting...' : 'Delete'}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card View (below md) */}
+              <div className="md:hidden space-y-3">
                 {expenses.map(exp => (
-                  <tr key={exp.id} className="border-b border-gray-700 hover:bg-gray-700/30">
-                    <td className="py-2 px-2 font-medium">{exp.name}</td>
-                    <td className="py-2 px-2">{formatCurrency(exp.amount)}</td>
-                    <td className="py-2 px-2">{exp.due_date}</td>
-                    <td className="py-2 px-2">{exp.is_recurring ? exp.recurring_frequency : 'No'}</td>
-                    <td className="py-2 px-2">
+                  <div key={exp.id} className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                    <div className="flex justify-between items-start mb-3">
                       <div className="flex items-center gap-2">
                         <div 
-                          className="w-4 h-4 rounded-full border border-gray-600"
+                          className="w-3 h-3 rounded-full border border-gray-500"
                           style={{ backgroundColor: CATEGORY_COLORS[exp.category] }}
                         />
-                        <span className="capitalize">{exp.category}</span>
+                        <h3 className="font-medium text-white">{exp.name}</h3>
                       </div>
-                    </td>
-                    <td className="py-2 px-2">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleEdit(exp)}
-                          className="text-blue-500 hover:text-blue-700"
-                          disabled={deleting === exp.id}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(exp.id)}
-                          className="text-red-500 hover:text-red-700 disabled:opacity-50"
-                          disabled={deleting === exp.id}
-                        >
-                          {deleting === exp.id ? 'Deleting...' : 'Delete'}
-                        </button>
+                      <div className="text-right">
+                        <div className="text-lg font-semibold text-white">{formatCurrency(exp.amount)}</div>
+                        <div className="text-sm text-gray-400 capitalize">{exp.category}</div>
                       </div>
-                    </td>
-                  </tr>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2 text-sm text-gray-300 mb-3">
+                      <div>
+                        <span className="text-gray-400">Due:</span> {exp.due_date}
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Recurring:</span> {exp.is_recurring ? exp.recurring_frequency : 'No'}
+                      </div>
+                    </div>
+
+                    {exp.notes && (
+                      <div className="text-sm text-gray-400 mb-3">
+                        <span className="text-gray-500">Notes:</span> {exp.notes}
+                      </div>
+                    )}
+
+                    <div className="flex justify-end gap-2 pt-2 border-t border-gray-600">
+                      <button
+                        onClick={() => handleEdit(exp)}
+                        className="text-blue-500 hover:text-blue-400 text-sm font-medium"
+                        disabled={deleting === exp.id}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(exp.id)}
+                        className="text-red-500 hover:text-red-400 text-sm font-medium disabled:opacity-50"
+                        disabled={deleting === exp.id}
+                      >
+                        {deleting === exp.id ? 'Deleting...' : 'Delete'}
+                      </button>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </>
           )}
         </div>
 
