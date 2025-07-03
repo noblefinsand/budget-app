@@ -49,6 +49,13 @@ export default function Header({ displayName, avatarId, onLogout, onRefresh }: H
             Expenses
           </Link>
           <Link
+            to="/budget-time"
+            className={`$${location.pathname.startsWith('/budget-time') ? 'bg-blue-700' : 'bg-blue-600'} hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-base font-medium transition-colors duration-200`}
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            Budget Time
+          </Link>
+          <Link
             to="/settings"
             className={`$${location.pathname.startsWith('/settings') ? 'bg-gray-600' : 'bg-gray-700'} hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-base font-medium transition-colors duration-200`}
             onClick={() => setMobileMenuOpen(false)}
@@ -85,6 +92,12 @@ export default function Header({ displayName, avatarId, onLogout, onRefresh }: H
               className={`$${location.pathname.startsWith('/expenses') ? 'bg-green-700' : 'bg-green-600'} hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200`}
             >
               Expenses
+            </Link>
+            <Link
+              to="/budget-time"
+              className={`$${location.pathname.startsWith('/budget-time') ? 'bg-blue-700' : 'bg-blue-600'} hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200`}
+            >
+              Budget Time
             </Link>
             <Link
               to="/settings"
