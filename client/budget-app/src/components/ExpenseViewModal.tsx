@@ -7,9 +7,10 @@ interface ExpenseViewModalProps {
   isOpen: boolean;
   onClose: () => void;
   onEdit: (expense: Expense) => void;
+  onDelete: (expense: Expense) => void;
 }
 
-export default function ExpenseViewModal({ expense, isOpen, onClose, onEdit }: ExpenseViewModalProps) {
+export default function ExpenseViewModal({ expense, isOpen, onClose, onEdit, onDelete }: ExpenseViewModalProps) {
   if (!isOpen || !expense) return null;
 
   return (
@@ -98,6 +99,12 @@ export default function ExpenseViewModal({ expense, isOpen, onClose, onEdit }: E
               onClick={() => onEdit(expense)}
             >
               Edit Expense
+            </button>
+            <button
+              className="w-full sm:w-auto bg-red-600/20 hover:bg-red-600/30 text-red-400 hover:text-red-300 px-6 py-3 rounded-lg font-medium transition-colors"
+              onClick={() => onDelete(expense)}
+            >
+              Delete
             </button>
           </div>
         </div>

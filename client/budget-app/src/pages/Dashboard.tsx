@@ -8,6 +8,7 @@ import WelcomeModal from '../components/WelcomeModal';
 import ExpenseCalendar from '../components/ExpenseCalendar';
 import ExpenseViewModal from '../components/ExpenseViewModal';
 import ExpenseModal from '../components/ExpenseModal';
+import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 import Header from '../components/Header';
 
 export default function Dashboard() {
@@ -19,6 +20,9 @@ export default function Dashboard() {
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const displayName = profile ? (profile.display_name || user?.email || '') : '';
   const avatarId = profile ? (profile.avatar_id || 'cat') : '';
@@ -79,6 +83,30 @@ export default function Dashboard() {
     setSelectedExpense(null);
     setEditingExpense(expense);
     setShowEditModal(true);
+  };
+
+  const handleDeleteExpense = (expense: Expense) => {
+    setSelectedExpense(null);
+    setDeletingExpense(expense);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingExpense) return;
+    
+    setDeleting(deletingExpense.id);
+    const success = await expenseService.deleteExpense(deletingExpense.id);
+    if (success) {
+      setExpenses(prev => prev.filter(exp => exp.id !== deletingExpense.id));
+    }
+    setDeleting(null);
+    setDeletingExpense(null);
+    setShowDeleteModal(false);
+  };
+
+  const cancelDelete = () => {
+    setDeletingExpense(null);
+    setShowDeleteModal(false);
   };
 
   const handleSaveExpense = async (expenseData: {
@@ -146,6 +174,7 @@ export default function Dashboard() {
         isOpen={!!selectedExpense}
         onClose={handleCloseModal}
         onEdit={handleEditExpense}
+        onDelete={handleDeleteExpense}
       />
       <WelcomeModal 
         isOpen={showWelcomeModal} 
@@ -157,6 +186,15 @@ export default function Dashboard() {
         onSave={handleSaveExpense}
         expense={editingExpense}
         mode="edit"
+      />
+
+      <DeleteConfirmationModal
+        expense={deletingExpense}
+        isOpen={showDeleteModal}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
+        isDeleting={deleting === deletingExpense?.id}
+        currency={profile?.currency}
       />
     </div>
   );
