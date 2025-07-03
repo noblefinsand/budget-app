@@ -24,6 +24,7 @@ export interface Expense {
   name: string;
   amount: number;
   due_date: string;
+  recurring_pattern: string | null;
   category: ExpenseCategory;
   is_recurring: boolean;
   recurring_frequency: RecurringFrequency | null;
@@ -38,6 +39,7 @@ export interface ExpenseCreate {
   name: string;
   amount: number;
   due_date: string;
+  recurring_pattern?: string | null;
   category: ExpenseCategory;
   is_recurring?: boolean;
   recurring_frequency?: RecurringFrequency;
@@ -49,6 +51,7 @@ export interface ExpenseUpdate {
   name?: string;
   amount?: number;
   due_date?: string;
+  recurring_pattern?: string | null;
   category?: ExpenseCategory;
   is_recurring?: boolean;
   recurring_frequency?: RecurringFrequency;
