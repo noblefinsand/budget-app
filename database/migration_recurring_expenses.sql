@@ -8,13 +8,13 @@
 ALTER TABLE expenses ALTER COLUMN due_date TYPE DATE;
 
 -- Add a comment to document the new format
-COMMENT ON COLUMN expenses.due_date IS 'For one-time expenses: YYYY-MM-DD format. For recurring expenses: W1 (weekly), B1,2024-01-15 (bi-weekly), M15 (monthly), Y1,15 (yearly)';
+COMMENT ON COLUMN expenses.due_date IS 'For one-time expenses: YYYY-MM-DD format. For recurring expenses: due_date contains the next occurrence date';
 
 -- Add the new recurring_pattern column
 ALTER TABLE expenses ADD COLUMN IF NOT EXISTS recurring_pattern TEXT;
 
 -- Add a comment to document the new field
-COMMENT ON COLUMN expenses.recurring_pattern IS 'For recurring expenses: W1 (weekly), B1,2024-01-15 (bi-weekly), M15 (monthly), Y1,15 (yearly). NULL for one-time expenses.';
+COMMENT ON COLUMN expenses.recurring_pattern IS 'For recurring expenses: "4,2024-01-15" (weekly Thursday starting Jan 15), "2024-01-15" (bi-weekly start date), "15" (monthly 15th), "1,15" (yearly January 15th). NULL for one-time expenses.';
 
 -- Add a check constraint to ensure data consistency
 ALTER TABLE expenses ADD CONSTRAINT check_recurring_consistency 

@@ -43,18 +43,33 @@ export default function RecurringDateSelector({ frequency, value, onChange, labe
     switch (frequency) {
       case 'weekly':
         return (
-          <select
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Select day of week</option>
-            {DAYS_OF_WEEK.map(day => (
-              <option key={day.value} value={day.value}>
-                {day.label}
-              </option>
-            ))}
-          </select>
+          <div className="space-y-2">
+            <select
+              value={value.split(',')[0] || ''}
+              onChange={(e) => {
+                const startDate = value.split(',')[1] || '';
+                onChange(`${e.target.value},${startDate}`);
+              }}
+              className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Select day of week</option>
+              {DAYS_OF_WEEK.map(day => (
+                <option key={day.value} value={day.value}>
+                  {day.label}
+                </option>
+              ))}
+            </select>
+            <input
+              type="date"
+              value={value.split(',')[1] || ''}
+              onChange={(e) => {
+                const dayOfWeek = value.split(',')[0] || '';
+                onChange(`${dayOfWeek},${e.target.value}`);
+              }}
+              className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Start date"
+            />
+          </div>
         );
 
       case 'bi-weekly':
@@ -135,7 +150,7 @@ export default function RecurringDateSelector({ frequency, value, onChange, labe
         {(() => {
           switch (frequency) {
             case 'weekly':
-              return 'Select which day of the week this expense occurs';
+              return 'Select which day of the week this expense occurs and the start date';
             case 'bi-weekly':
               return 'Select the start date for bi-weekly recurrence.';
             case 'monthly':
