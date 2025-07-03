@@ -124,32 +124,34 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
             {toolbar.label}
           </h2>
         </div>
-        {/* Category color key */}
-        <div className="flex flex-wrap items-center space-x-4 mt-3">
-          {Object.entries(CATEGORY_COLORS).map(([category, color]) => (
-            <div key={category} className="flex items-center space-x-1 mb-1">
-              <span
-                className="inline-block w-4 h-4 rounded-full border border-white/20 mr-1"
-                style={{ backgroundColor: color }}
-                title={category}
-              />
-              <span className="text-xs text-gray-300 capitalize">{category}</span>
-            </div>
-          ))}
+        {/* Category color key - horizontally scrollable on mobile */}
+        <div className="mt-3 overflow-x-auto">
+          <div className="flex flex-nowrap items-center space-x-4 min-w-max">
+            {Object.entries(CATEGORY_COLORS).map(([category, color]) => (
+              <div key={category} className="flex items-center space-x-1 mb-1">
+                <span
+                  className="inline-block w-4 h-4 rounded-full border border-white/20 mr-1"
+                  style={{ backgroundColor: color }}
+                  title={category}
+                />
+                <span className="text-xs text-gray-300 capitalize">{category}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
   };
 
   return (
-    <div className={`bg-gray-900 rounded-xl p-2 sm:p-4 w-full md:max-w-5xl md:mx-auto ${className}`}>
+    <div className={`bg-gray-900 rounded-xl p-2 sm:p-4 w-full max-w-full overflow-hidden ${className}`}>
       <div className="w-full">
         <Calendar
           localizer={localizer}
           events={events}
           startAccessor="start"
           endAccessor="end"
-          style={{ height: 600 }}
+          style={{ height: 'calc(100vh - 200px)', minHeight: 600 }}
           views={['month']}
           view={Views.MONTH}
           date={currentDate}
@@ -182,10 +184,14 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
       <style>{`
         .expense-calendar {
           color: white;
+          max-width: 100%;
+          overflow-x: hidden;
         }
         .expense-calendar .rbc-calendar {
           background-color: #1f2937;
           color: white;
+          max-width: 100%;
+          overflow-x: hidden;
         }
         .expense-calendar .rbc-header {
           background-color: #374151;
@@ -215,30 +221,31 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
         .expense-calendar .rbc-event {
           background-color: transparent;
           border: none;
-          padding: 0;
+          padding: 1px 6px;
           border-radius: 6px;
-          font-size: 1rem;
+          font-size: 0.95rem;
+          min-height: 16px;
+          display: flex;
+          align-items: center;
+          white-space: normal;
         }
         .expense-calendar .rbc-event-content {
           padding: 0;
           display: flex;
           align-items: center;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          padding-left: 6px;
-          padding-right: 6px;
-          font-size: 1rem;
+          font-size: 0.95rem;
+          min-height: 12px;
+          word-break: break-word;
         }
         .expense-calendar .rbc-show-more {
           color: #3b82f6 !important;
           background: transparent !important;
           font-weight: 600;
           border-radius: 4px;
-          padding: 2px 6px;
+          padding: 1px 6px;
           transition: background 0.2s, color 0.2s;
           cursor: pointer;
-          font-size: 1rem;
+          font-size: 0.95rem;
         }
         .expense-calendar .rbc-show-more:hover {
           background: #2563eb !important;
@@ -280,21 +287,35 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
           .expense-calendar .rbc-event,
           .expense-calendar .rbc-event-content,
           .expense-calendar .rbc-show-more {
-            font-size: 0.95rem;
+            font-size: 0.8rem;
           }
           .expense-calendar .rbc-event,
           .expense-calendar .rbc-event-content,
           .expense-calendar .rbc-show-more {
-            padding: 2px 6px;
-            border-radius: 5px;
+            padding: 1px 3px;
+            border-radius: 4px;
             width: 100%;
             box-sizing: border-box;
+            max-width: 100%;
           }
           .expense-calendar .rbc-header {
-            padding: 4px;
+            padding: 4px 2px;
+            font-size: 0.8rem;
           }
           .expense-calendar .rbc-date-cell {
             padding: 2px 2px 4px 2px;
+            font-size: 0.8rem;
+          }
+        }
+        /* Ensure no horizontal scroll on all screen sizes */
+        .expense-calendar .rbc-month-view,
+        .expense-calendar .rbc-time-view {
+          max-width: 100%;
+          overflow-x: hidden;
+        }
+        @media (max-width: 640px) {
+          .expense-calendar .min-w-max {
+            min-width: 600px;
           }
         }
       `}</style>

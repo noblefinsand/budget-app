@@ -118,8 +118,8 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-900">
       <Header displayName={displayName} avatarId={avatarId} onLogout={logout} />
       
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
+      <main className="w-full py-6 px-4 sm:px-6 lg:px-8">
+        <div className="py-6">
           {loading ? (
             <div className="flex items-center justify-center h-96 bg-gray-800 rounded-xl">
               <div className="text-center">
