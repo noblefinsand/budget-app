@@ -55,9 +55,10 @@ export function computeNextDueDate(pattern: string, frequency: string): string {
   const today = new Date();
   switch (frequency) {
     case 'weekly': {
-      const targetDay = parseInt(pattern); // 1-7
+      const [targetDay] = pattern.split(',');
+      const targetDayNum = parseInt(targetDay); // 1-7
       const currentDay = today.getDay() === 0 ? 7 : today.getDay();
-      let daysUntilNext = targetDay - currentDay;
+      let daysUntilNext = targetDayNum - currentDay;
       if (daysUntilNext <= 0) daysUntilNext += 7;
       const nextDate = new Date(today);
       nextDate.setDate(today.getDate() + daysUntilNext);

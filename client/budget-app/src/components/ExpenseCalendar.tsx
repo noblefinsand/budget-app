@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
-import { format, parse, startOfWeek, getDay, parseISO } from 'date-fns';
+import { format, parse, startOfWeek, getDay } from 'date-fns';
 import type { Expense } from '../types/expense';
 import { CATEGORY_COLORS } from '../types/expense';
 import { profileService } from '../services/profileService';
+import { generateRecurringDates } from '../utils/dateFormat';
 import React from 'react';
 
 // Import calendar styles
@@ -38,6 +39,12 @@ interface ExpenseCalendarProps {
   className?: string;
 }
 
+// Helper to parse YYYY-MM-DD as local date
+function parseLocalDate(dateString: string): Date {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
 export default function ExpenseCalendar({ expenses, onEventClick, className = '' }: ExpenseCalendarProps) {
   const [currency, setCurrency] = useState('USD');
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -56,31 +63,63 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
 
   // Convert expenses to calendar events
   const events: CalendarEvent[] = useMemo(() => {
-    return expenses.map(expense => {
-      // Parse the date string and create a local date to avoid timezone issues
-      const dueDate = parseISO(expense.due_date);
-      
-      return {
-        id: expense.id,
-        title: `${expense.name} - ${formatCurrency(expense.amount)}`,
-        start: dueDate,
-        end: dueDate,
-        resource: expense,
-        color: CATEGORY_COLORS[expense.category],
-      };
+    const allEvents: CalendarEvent[] = [];
+    
+    expenses.forEach(expense => {
+      if (expense.is_recurring && expense.recurring_pattern && expense.recurring_frequency) {
+        // Generate multiple events for recurring expenses
+        const recurringDates = generateRecurringDates(
+          expense.due_date,
+          expense.recurring_pattern,
+          expense.recurring_frequency,
+          12 // Generate 12 months ahead
+        );
+        // Filter out dates that are before the original due date
+        const originalDueDate = parseLocalDate(expense.due_date);
+        const validDates = recurringDates.filter(date => date >= originalDueDate);
+        validDates.forEach((date, index) => {
+          allEvents.push({
+            id: `${expense.id}-${index}`,
+            title: `${expense.name} - ${formatCurrency(expense.amount)}`,
+            start: date,
+            end: date,
+            resource: expense,
+            color: CATEGORY_COLORS[expense.category],
+          });
+        });
+      } else {
+        // Single event for non-recurring expenses
+        const dueDate = parseLocalDate(expense.due_date);
+        allEvents.push({
+          id: expense.id,
+          title: `${expense.name} - ${formatCurrency(expense.amount)}`,
+          start: dueDate,
+          end: dueDate,
+          resource: expense,
+          color: CATEGORY_COLORS[expense.category],
+        });
+      }
     });
+    return allEvents;
   }, [expenses, currency, formatCurrency]);
 
   // Custom event component with category colors
-  const EventComponent = ({ event }: { event: CalendarEvent }) => (
-    <>
-      <span className="font-semibold truncate text-xs flex-1">{event.resource.name}</span>
-      <span className="opacity-90 text-xs ml-1">{formatCurrency(event.resource.amount)}</span>
-      {event.resource.is_recurring && (
-        <span className="text-xs opacity-75 ml-1 hidden md:inline">🔄</span>
-      )}
-    </>
-  );
+  const EventComponent = ({ event }: { event: CalendarEvent }) => {
+    // Check if this is a recurring event (has index in ID)
+    const isRecurringInstance = event.id.includes('-');
+    
+    return (
+      <>
+        <span className="font-semibold truncate text-xs flex-1">{event.resource.name}</span>
+        <span className="opacity-90 text-xs ml-1">{formatCurrency(event.resource.amount)}</span>
+        {event.resource.is_recurring && (
+          <span className="text-xs opacity-75 ml-1 hidden md:inline">
+            {isRecurringInstance ? '🔄' : '📅'}
+          </span>
+        )}
+      </>
+    );
+  };
 
   // Custom toolbar with dark theme styling
   const CustomToolbar = (toolbar: { label: string }) => {
@@ -161,20 +200,26 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
             event: EventComponent,
             toolbar: CustomToolbar,
           }}
-          eventPropGetter={(event) => ({
-            style: {
-              backgroundColor: event.color,
-              color: '#fff',
-              border: '1px solid rgba(255,255,255,0.2)',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              boxSizing: 'border-box',
-              display: 'flex',
-              alignItems: 'center',
-              padding: '4px 8px',
-              fontSize: '1rem',
-            },
-          })}
+          eventPropGetter={(event) => {
+            // Check if this is a recurring event instance
+            const isRecurringInstance = event.id.includes('-');
+            
+            return {
+              style: {
+                backgroundColor: event.color,
+                color: '#fff',
+                border: '1px solid rgba(255,255,255,0.2)',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                boxSizing: 'border-box',
+                display: 'flex',
+                alignItems: 'center',
+                padding: '4px 8px',
+                fontSize: '1rem',
+                opacity: isRecurringInstance ? 0.8 : 1,
+              },
+            };
+          }}
           onSelectEvent={(event) => onEventClick?.(event.resource)}
           className="expense-calendar"
           dayLayoutAlgorithm="no-overlap"

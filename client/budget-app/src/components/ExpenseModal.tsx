@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import type { Expense, ExpenseCategory, RecurringFrequency } from '../types/expense';
 import CategorySelect from './CategorySelect';
 import RecurringDateSelector from './RecurringDateSelector';
-import { computeNextDueDate } from '../../utils/dateFormat';
 
 interface ExpenseModalProps {
   isOpen: boolean;
@@ -147,8 +146,23 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense, mode }:
     };
     
     if (form.is_recurring && form.recurring_frequency) {
-      // For recurring expenses, calculate the next due date
-      expenseData.due_date = computeNextDueDate(recurringDateValue, form.recurring_frequency);
+      if (form.recurring_frequency === 'weekly') {
+        // For weekly, the start date is the second part of the pattern
+        expenseData.due_date = recurringDateValue.split(',')[1];
+      } else if (form.recurring_frequency === 'bi-weekly') {
+        // For bi-weekly, the pattern is just the start date
+        expenseData.due_date = recurringDateValue;
+      } else if (form.recurring_frequency === 'monthly') {
+        // For monthly, use the current month and the selected day
+        const today = new Date();
+        const day = parseInt(recurringDateValue, 10);
+        expenseData.due_date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      } else if (form.recurring_frequency === 'yearly') {
+        // For yearly, use the selected month and day in the current year
+        const today = new Date();
+        const [month, day] = recurringDateValue.split(',');
+        expenseData.due_date = `${today.getFullYear()}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      }
     }
 
     try {
