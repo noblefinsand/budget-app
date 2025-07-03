@@ -14,8 +14,12 @@ export default function Settings() {
     avatar_id: 'cat',
     currency: 'USD',
     timezone: 'UTC',
-    paycheck_frequency: 'bi-weekly'
+    paycheck_frequency: 'bi-weekly',
+    paycheck_reference_date: ''
   });
+
+  const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     loadProfile();
@@ -30,7 +34,8 @@ export default function Settings() {
           avatar_id: profileData.avatar_id || 'cat',
           currency: profileData.currency,
           timezone: profileData.timezone,
-          paycheck_frequency: profileData.paycheck_frequency
+          paycheck_frequency: profileData.paycheck_frequency,
+          paycheck_reference_date: profileData.paycheck_reference_date || ''
         });
       }
     } catch (error) {
@@ -41,13 +46,38 @@ export default function Settings() {
     }
   };
 
+  const validate = (data: typeof formData) => {
+    const newErrors: { [key: string]: string } = {};
+    if (!data.display_name || data.display_name.trim() === '') {
+      newErrors.display_name = 'Display name is required';
+    }
+    if (!data.currency || data.currency.trim() === '') {
+      newErrors.currency = 'Currency is required';
+    }
+    if (!data.timezone || data.timezone.trim() === '') {
+      newErrors.timezone = 'Timezone is required';
+    }
+    if (!data.paycheck_frequency || data.paycheck_frequency.trim() === '') {
+      newErrors.paycheck_frequency = 'Paycheck frequency is required';
+    }
+    if (!data.paycheck_reference_date || data.paycheck_reference_date.trim() === '') {
+      newErrors.paycheck_reference_date = 'Reference paycheck date is required';
+    }
+    return newErrors;
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+    setTouched(prev => ({ ...prev, [name]: true }));
   };
+
+  useEffect(() => {
+    setErrors(validate(formData));
+  }, [formData]);
 
   const handleAvatarSelect = (avatarId: string) => {
     setFormData(prev => ({
@@ -100,7 +130,7 @@ export default function Settings() {
               <div className="space-y-6">
                 <div>
                   <label htmlFor="display_name" className="block text-sm font-medium text-gray-300 mb-2">
-                    Display Name
+                    Display Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -108,9 +138,13 @@ export default function Settings() {
                     name="display_name"
                     value={formData.display_name}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    onBlur={() => setTouched(prev => ({ ...prev, display_name: true }))}
+                    className={`w-full px-4 py-3 bg-gray-700/50 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${touched.display_name && errors.display_name ? 'border-red-500' : 'border-gray-600'}`}
                     placeholder="Enter your display name"
                   />
+                  {touched.display_name && errors.display_name && (
+                    <p className="text-red-400 text-xs mt-1">{errors.display_name}</p>
+                  )}
                 </div>
                 <AvatarSelector
                   selectedAvatar={formData.avatar_id || 'cat'}
@@ -125,33 +159,40 @@ export default function Settings() {
               <div className="space-y-4">
                 <div>
                   <label htmlFor="currency" className="block text-sm font-medium text-gray-300 mb-2">
-                    Currency
+                    Currency <span className="text-red-500">*</span>
                   </label>
                   <select
                     id="currency"
                     name="currency"
                     value={formData.currency}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    onBlur={() => setTouched(prev => ({ ...prev, currency: true }))}
+                    className={`w-full px-4 py-3 bg-gray-700/50 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${touched.currency && errors.currency ? 'border-red-500' : 'border-gray-600'}`}
                   >
+                    <option value="">Select currency</option>
                     <option value="USD">USD ($)</option>
                     <option value="EUR">EUR (€)</option>
                     <option value="GBP">GBP (£)</option>
                     <option value="CAD">CAD (C$)</option>
                     <option value="AUD">AUD (A$)</option>
                   </select>
+                  {touched.currency && errors.currency && (
+                    <p className="text-red-400 text-xs mt-1">{errors.currency}</p>
+                  )}
                 </div>
                 <div>
                   <label htmlFor="timezone" className="block text-sm font-medium text-gray-300 mb-2">
-                    Timezone
+                    Timezone <span className="text-red-500">*</span>
                   </label>
                   <select
                     id="timezone"
                     name="timezone"
                     value={formData.timezone}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    onBlur={() => setTouched(prev => ({ ...prev, timezone: true }))}
+                    className={`w-full px-4 py-3 bg-gray-700/50 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${touched.timezone && errors.timezone ? 'border-red-500' : 'border-gray-600'}`}
                   >
+                    <option value="">Select timezone</option>
                     <option value="UTC">UTC</option>
                     <option value="America/New_York">Eastern Time</option>
                     <option value="America/Chicago">Central Time</option>
@@ -161,23 +202,49 @@ export default function Settings() {
                     <option value="Europe/Paris">Paris</option>
                     <option value="Asia/Tokyo">Tokyo</option>
                   </select>
+                  {touched.timezone && errors.timezone && (
+                    <p className="text-red-400 text-xs mt-1">{errors.timezone}</p>
+                  )}
                 </div>
                 <div>
                   <label htmlFor="paycheck_frequency" className="block text-sm font-medium text-gray-300 mb-2">
-                    Paycheck Frequency
+                    Paycheck Frequency <span className="text-red-500">*</span>
                   </label>
                   <select
                     id="paycheck_frequency"
                     name="paycheck_frequency"
                     value={formData.paycheck_frequency}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    onBlur={() => setTouched(prev => ({ ...prev, paycheck_frequency: true }))}
+                    className={`w-full px-4 py-3 bg-gray-700/50 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${touched.paycheck_frequency && errors.paycheck_frequency ? 'border-red-500' : 'border-gray-600'}`}
                   >
+                    <option value="">Select frequency</option>
                     <option value="weekly">Weekly</option>
                     <option value="bi-weekly">Bi-weekly</option>
                     <option value="semi-monthly">Semi-monthly</option>
                     <option value="monthly">Monthly</option>
                   </select>
+                  {touched.paycheck_frequency && errors.paycheck_frequency && (
+                    <p className="text-red-400 text-xs mt-1">{errors.paycheck_frequency}</p>
+                  )}
+                </div>
+                <div>
+                  <label htmlFor="paycheck_reference_date" className="block text-sm font-medium text-gray-300 mb-2">
+                    Reference Paycheck Date <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    id="paycheck_reference_date"
+                    name="paycheck_reference_date"
+                    value={formData.paycheck_reference_date || ''}
+                    onChange={handleInputChange}
+                    onBlur={() => setTouched(prev => ({ ...prev, paycheck_reference_date: true }))}
+                    className={`w-full px-4 py-3 bg-gray-700/50 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${touched.paycheck_reference_date && errors.paycheck_reference_date ? 'border-red-500' : 'border-gray-600'}`}
+                  />
+                  {touched.paycheck_reference_date && errors.paycheck_reference_date && (
+                    <p className="text-red-400 text-xs mt-1">{errors.paycheck_reference_date}</p>
+                  )}
+                  <p className="text-gray-400 text-xs mt-1">This date is used as the starting point for your paycheck cycle.</p>
                 </div>
               </div>
             </div>
@@ -197,7 +264,7 @@ export default function Settings() {
             <div className="flex justify-end">
               <button
                 type="submit"
-                disabled={saving}
+                disabled={saving || Object.keys(errors).length > 0}
                 className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
                 {saving ? 'Saving...' : 'Save Settings'}
