@@ -1,5 +1,5 @@
 // Utility for formatting due dates, including recurring logic
-import type { Expense } from '../src/types/expense';
+import type { Expense } from '../types/expense';
 
 export function getDaySuffix(day: number): string {
   if (day >= 11 && day <= 13) return 'th';
@@ -13,7 +13,6 @@ export function getDaySuffix(day: number): string {
 
 export function formatDueDateForDisplay(expense: Expense): string {
   if (!expense.is_recurring || !expense.recurring_frequency) {
-    // Parse as local date to avoid off-by-one error
     const [year, month, day] = expense.due_date.split('-').map(Number);
     return new Date(year, month - 1, day).toLocaleDateString();
   }
@@ -30,9 +29,8 @@ export function formatDueDateForDisplay(expense: Expense): string {
       const [year, month, day] = pattern.split('-').map(Number);
       return new Date(year, month - 1, day).toLocaleDateString();
     }
-    case 'monthly': {
+    case 'monthly':
       return `${pattern}${getDaySuffix(parseInt(pattern))} of month`;
-    }
     case 'yearly': {
       const [month, day] = pattern.split(',');
       const monthNames = [
@@ -44,46 +42,8 @@ export function formatDueDateForDisplay(expense: Expense): string {
       return `${monthName} ${day}${getDaySuffix(parseInt(day))}`;
     }
     default: {
-      // Fallback for unknown recurring types
       const [year, month, day] = expense.due_date.split('-').map(Number);
       return new Date(year, month - 1, day).toLocaleDateString();
     }
-  }
-}
-
-export function computeNextDueDate(pattern: string, frequency: string): string {
-  const today = new Date();
-  switch (frequency) {
-    case 'weekly': {
-      const targetDay = parseInt(pattern); // 1-7
-      const currentDay = today.getDay() === 0 ? 7 : today.getDay();
-      let daysUntilNext = targetDay - currentDay;
-      if (daysUntilNext <= 0) daysUntilNext += 7;
-      const nextDate = new Date(today);
-      nextDate.setDate(today.getDate() + daysUntilNext);
-      return nextDate.toISOString().split('T')[0];
-    }
-    case 'bi-weekly': {
-      // pattern: 'YYYY-MM-DD' (start date)
-      return pattern || today.toISOString().split('T')[0];
-    }
-    case 'monthly': {
-      const dayOfMonth = parseInt(pattern);
-      let nextMonth = new Date(today.getFullYear(), today.getMonth(), dayOfMonth);
-      if (nextMonth <= today) {
-        nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, dayOfMonth);
-      }
-      return nextMonth.toISOString().split('T')[0];
-    }
-    case 'yearly': {
-      const [month, day] = pattern.split(',');
-      const nextYear = new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
-      if (nextYear <= today) {
-        nextYear.setFullYear(today.getFullYear() + 1);
-      }
-      return nextYear.toISOString().split('T')[0];
-    }
-    default:
-      return pattern;
   }
 } 
