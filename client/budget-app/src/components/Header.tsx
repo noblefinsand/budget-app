@@ -6,11 +6,19 @@ interface HeaderProps {
   displayName: string;
   avatarId: string;
   onLogout: () => void;
+  onRefresh?: () => void;
 }
 
-export default function Header({ displayName, avatarId, onLogout }: HeaderProps) {
+export default function Header({ displayName, avatarId, onLogout, onRefresh }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    if (location.pathname === '/dashboard' && onRefresh) {
+      e.preventDefault();
+      onRefresh();
+    }
+  };
 
   return (
     <nav className="bg-gray-800 shadow-lg border-b border-gray-700 relative z-50">
@@ -64,6 +72,7 @@ export default function Header({ displayName, avatarId, onLogout }: HeaderProps)
           <div className="flex items-center flex-shrink-0">
             <Link
               to="/dashboard"
+              onClick={handleLogoClick}
               className="text-2xl font-bold text-blue-400 hover:text-blue-300 transition-colors duration-200 cursor-pointer"
             >
               Budget Buddy

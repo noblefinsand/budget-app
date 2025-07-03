@@ -58,6 +58,11 @@ export default function Dashboard() {
     }
   };
 
+  const refreshData = async () => {
+    await loadExpenses();
+    await loadProfile();
+  };
+
   const handleWelcomeComplete = () => {
     setShowWelcomeModal(false);
     // Reload profile to get updated data
@@ -116,7 +121,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-900">
-      <Header displayName={displayName} avatarId={avatarId} onLogout={logout} />
+      <Header displayName={displayName} avatarId={avatarId} onLogout={logout} onRefresh={refreshData} />
       
       <main className="w-full py-6 px-4 sm:px-6 lg:px-8">
         <div className="py-6">
