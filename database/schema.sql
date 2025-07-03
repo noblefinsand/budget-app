@@ -154,6 +154,7 @@ CREATE TABLE IF NOT EXISTS expenses (
   name TEXT NOT NULL,
   amount DECIMAL(10,2) NOT NULL,
   due_date DATE NOT NULL,
+  recurring_pattern TEXT,
   category expense_category NOT NULL,
   is_recurring BOOLEAN DEFAULT FALSE,
   recurring_frequency recurring_frequency,

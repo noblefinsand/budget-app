@@ -2,35 +2,21 @@ import { useEffect, useState } from 'react';
 import { expenseService } from '../services/expenseService';
 import { profileService } from '../services/profileService';
 import { Link } from 'react-router-dom';
-import type { Expense, ExpenseCreate, RecurringFrequency, ExpenseCategory } from '../types/expense';
+import type { Expense, RecurringFrequency, ExpenseCategory } from '../types/expense';
 import { CATEGORY_COLORS } from '../types/expense';
-import CategorySelect from '../components/CategorySelect';
-
-
-const FREQUENCIES: RecurringFrequency[] = ['monthly', 'bi-weekly', 'weekly', 'yearly'];
+import ExpenseModal from '../components/ExpenseModal';
+import { formatDueDateForDisplay } from '../../utils/dateFormat';
 
 export default function Expenses() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [currency, setCurrency] = useState('USD');
   const [loading, setLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
-  const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
-  const [form, setForm] = useState<ExpenseCreate>({
-    name: '',
-    amount: 0,
-    due_date: '',
-    category: 'other',
-    is_recurring: false,
-    recurring_frequency: undefined,
-    notes: '',
-    excluded_from_paycheck: false
-  });
-  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchExpenses();
@@ -52,84 +38,67 @@ export default function Expenses() {
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
 
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    if (type === 'checkbox') {
-      setForm(prev => ({
-        ...prev,
-        [name]: (e.target as HTMLInputElement).checked
-      }));
-    } else {
-      setForm(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
-  };
-
-  const handleCategoryChange = (category: ExpenseCategory) => {
-    setForm(prev => ({
-      ...prev,
-      category
-    }));
-  };
-
-  const handleSave = async () => {
-    setFormError(null);
-    if (!form.name.trim() || !form.amount || !form.due_date || !form.category) {
-      setFormError('Please fill in all required fields.');
-      return;
-    }
-    if (form.is_recurring && !form.recurring_frequency) {
-      setFormError('Please select a recurring frequency.');
-      return;
-    }
-    setSaving(true);
-    
-    if (editingExpense) {
+  const handleSaveExpense = async (expenseData: {
+    name: string;
+    amount: number;
+    due_date: string;
+    category: ExpenseCategory;
+    is_recurring: boolean;
+    recurring_frequency: RecurringFrequency | null;
+    recurring_pattern: string | null;
+    notes: string;
+    excluded_from_paycheck: boolean;
+  }) => {
+    if (modalMode === 'edit' && editingExpense) {
       const updatedExpense = await expenseService.updateExpense(editingExpense.id, {
-        ...form,
-        amount: Number(form.amount),
-        recurring_frequency: form.is_recurring ? form.recurring_frequency : undefined
+        name: expenseData.name,
+        amount: expenseData.amount,
+        due_date: expenseData.due_date,
+        category: expenseData.category,
+        is_recurring: expenseData.is_recurring,
+        recurring_frequency: expenseData.recurring_frequency || undefined,
+        recurring_pattern: expenseData.recurring_pattern,
+        notes: expenseData.notes,
+        excluded_from_paycheck: expenseData.excluded_from_paycheck
       });
       if (updatedExpense) {
         setExpenses(prev => prev.map(exp => exp.id === editingExpense.id ? updatedExpense : exp));
-        setShowEditModal(false);
+        setShowModal(false);
         setEditingExpense(null);
-        resetForm();
       } else {
-        setFormError('Failed to update expense.');
+        throw new Error('Failed to update expense.');
       }
     } else {
       const newExpense = await expenseService.addExpense({
-        ...form,
-        amount: Number(form.amount),
-        recurring_frequency: form.is_recurring ? form.recurring_frequency : undefined
+        name: expenseData.name,
+        amount: expenseData.amount,
+        due_date: expenseData.due_date,
+        category: expenseData.category,
+        is_recurring: expenseData.is_recurring,
+        recurring_frequency: expenseData.recurring_frequency || undefined,
+        recurring_pattern: expenseData.recurring_pattern,
+        notes: expenseData.notes,
+        excluded_from_paycheck: expenseData.excluded_from_paycheck
       });
       if (newExpense) {
         setExpenses(prev => [...prev, newExpense]);
-        setShowAddModal(false);
-        resetForm();
+        setShowModal(false);
       } else {
-        setFormError('Failed to add expense.');
+        throw new Error('Failed to add expense.');
       }
     }
-    setSaving(false);
+  };
+
+  const handleAddExpense = () => {
+    setModalMode('add');
+    setEditingExpense(null);
+    setShowModal(true);
   };
 
   const handleEdit = (expense: Expense) => {
+    setModalMode('edit');
     setEditingExpense(expense);
-    setForm({
-      name: expense.name,
-      amount: expense.amount,
-      due_date: expense.due_date,
-      category: expense.category,
-      is_recurring: expense.is_recurring,
-      recurring_frequency: expense.recurring_frequency || undefined,
-      notes: expense.notes || '',
-      excluded_from_paycheck: expense.excluded_from_paycheck
-    });
-    setShowEditModal(true);
+    setShowModal(true);
   };
 
   const handleDelete = async (expenseId: string) => {
@@ -158,28 +127,12 @@ export default function Expenses() {
     setShowDeleteModal(false);
   };
 
-  const resetForm = () => {
-    setForm({
-      name: '',
-      amount: 0,
-      due_date: '',
-      category: 'other',
-      is_recurring: false,
-      recurring_frequency: undefined,
-      notes: '',
-      excluded_from_paycheck: false
-    });
-    setFormError(null);
-  };
-
   const closeModal = () => {
-    setShowAddModal(false);
-    setShowEditModal(false);
+    setShowModal(false);
     setEditingExpense(null);
-    resetForm();
   };
 
- return (
+  return (
     <div className="min-h-screen bg-gray-900">
       <nav className="bg-gray-800 shadow-lg border-b border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -196,7 +149,7 @@ export default function Expenses() {
       <div className="max-w-4xl mx-auto p-6">
         <div className="flex justify-end items-center mb-6">
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={handleAddExpense}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
           >
             + Add Expense
@@ -229,7 +182,7 @@ export default function Expenses() {
                       <tr key={exp.id} className="border-b border-gray-700 hover:bg-gray-700/30">
                         <td className="py-2 px-2 font-medium">{exp.name}</td>
                         <td className="py-2 px-2">{formatCurrency(exp.amount)}</td>
-                        <td className="py-2 px-2">{exp.due_date}</td>
+                        <td className="py-2 px-2">{formatDueDateForDisplay(exp)}</td>
                         <td className="py-2 px-2">{exp.is_recurring ? exp.recurring_frequency : 'No'}</td>
                         <td className="py-2 px-2">
                           <div className="flex items-center gap-2">
@@ -251,7 +204,7 @@ export default function Expenses() {
                             </button>
                             <button
                               onClick={() => handleDelete(exp.id)}
-                              className="text-red-500 hover:text-red-700 disabled:opacity-50"
+                              className="text-red-500 hover:text-red-700"
                               disabled={deleting === exp.id}
                             >
                               {deleting === exp.id ? 'Deleting...' : 'Delete'}
@@ -265,49 +218,37 @@ export default function Expenses() {
               </div>
 
               {/* Mobile Card View (below md) */}
-              <div className="md:hidden space-y-3">
+              <div className="md:hidden space-y-4">
                 {expenses.map(exp => (
-                  <div key={exp.id} className="bg-gray-700 rounded-lg p-4 border border-gray-600">
-                    <div className="flex justify-between items-start mb-3">
+                  <div key={exp.id} className="bg-gray-700 rounded-lg p-4 space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-medium text-white">{exp.name}</h3>
+                        <p className="text-gray-400 text-sm">{formatCurrency(exp.amount)}</p>
+                      </div>
                       <div className="flex items-center gap-2">
                         <div 
-                          className="w-3 h-3 rounded-full border border-gray-500"
+                          className="w-3 h-3 rounded-full border border-gray-600"
                           style={{ backgroundColor: CATEGORY_COLORS[exp.category] }}
                         />
-                        <h3 className="font-medium text-white">{exp.name}</h3>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-lg font-semibold text-white">{formatCurrency(exp.amount)}</div>
-                        <div className="text-sm text-gray-400 capitalize">{exp.category}</div>
+                        <span className="text-gray-400 text-sm capitalize">{exp.category}</span>
                       </div>
                     </div>
-                    
-                    <div className="grid grid-cols-2 gap-2 text-sm text-gray-300 mb-3">
-                      <div>
-                        <span className="text-gray-400">Due:</span> {exp.due_date}
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Recurring:</span> {exp.is_recurring ? exp.recurring_frequency : 'No'}
-                      </div>
+                    <div className="text-sm text-gray-400">
+                      <p>Due: {formatDueDateForDisplay(exp)}</p>
+                      <p>Recurring: {exp.is_recurring ? exp.recurring_frequency : 'No'}</p>
                     </div>
-
-                    {exp.notes && (
-                      <div className="text-sm text-gray-400 mb-3">
-                        <span className="text-gray-500">Notes:</span> {exp.notes}
-                      </div>
-                    )}
-
-                    <div className="flex justify-end gap-2 pt-2 border-t border-gray-600">
+                    <div className="flex gap-2 pt-2">
                       <button
                         onClick={() => handleEdit(exp)}
-                        className="text-blue-500 hover:text-blue-400 text-sm font-medium"
+                        className="text-blue-500 hover:text-blue-700 text-sm"
                         disabled={deleting === exp.id}
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDelete(exp.id)}
-                        className="text-red-500 hover:text-red-400 text-sm font-medium disabled:opacity-50"
+                        className="text-red-500 hover:text-red-700 text-sm"
                         disabled={deleting === exp.id}
                       >
                         {deleting === exp.id ? 'Deleting...' : 'Delete'}
@@ -320,237 +261,21 @@ export default function Expenses() {
           )}
         </div>
 
-        {/* Add Expense Modal */}
-        {showAddModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-gray-800 rounded-xl p-6 w-full max-w-lg">
-              <h2 className="text-xl font-bold text-white mb-4">Add Expense</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-gray-300 mb-1">Name *</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={form.name}
-                    onChange={handleFormChange}
-                    className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-300 mb-1">Amount *</label>
-                  <input
-                    type="number"
-                    name="amount"
-                    value={form.amount}
-                    onChange={handleFormChange}
-                    className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-300 mb-1">Due Date *</label>
-                  <input
-                    type="date"
-                    name="due_date"
-                    value={form.due_date}
-                    onChange={handleFormChange}
-                    className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <CategorySelect
-                    value={form.category}
-                    onChange={handleCategoryChange}
-                    label="Category *"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    name="is_recurring"
-                    checked={form.is_recurring}
-                    onChange={handleFormChange}
-                    className="form-checkbox h-4 w-4 text-blue-600"
-                  />
-                  <label className="text-gray-300">Recurring</label>
-                </div>
-                {form.is_recurring && (
-                  <div>
-                    <label className="block text-gray-300 mb-1">Frequency *</label>
-                    <select
-                      name="recurring_frequency"
-                      value={form.recurring_frequency || ''}
-                      onChange={handleFormChange}
-                      className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Select frequency</option>
-                      {FREQUENCIES.map(freq => (
-                        <option key={freq} value={freq}>{freq.charAt(0).toUpperCase() + freq.slice(1)}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-                <div>
-                  <label className="block text-gray-300 mb-1">Notes</label>
-                  <input
-                    type="text"
-                    name="notes"
-                    value={form.notes}
-                    onChange={handleFormChange}
-                    className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    name="excluded_from_paycheck"
-                    checked={form.excluded_from_paycheck}
-                    onChange={handleFormChange}
-                    className="form-checkbox h-4 w-4 text-blue-600"
-                  />
-                  <label className="text-gray-300">Exclude from paycheck calculation</label>
-                </div>
-                {formError && <div className="text-red-400 text-sm">{formError}</div>}
-              </div>
-              <div className="flex justify-end mt-6">
-                <button
-                  onClick={closeModal}
-                  className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium"
-                  disabled={saving}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  className="ml-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
-                  disabled={saving}
-                >
-                  {saving ? 'Saving...' : 'Save'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Edit Expense Modal */}
-        {showEditModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-gray-800 rounded-xl p-6 w-full max-w-lg">
-              <h2 className="text-xl font-bold text-white mb-4">Edit Expense</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-gray-300 mb-1">Name *</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={form.name}
-                    onChange={handleFormChange}
-                    className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-300 mb-1">Amount *</label>
-                  <input
-                    type="number"
-                    name="amount"
-                    value={form.amount}
-                    onChange={handleFormChange}
-                    className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-300 mb-1">Due Date *</label>
-                  <input
-                    type="date"
-                    name="due_date"
-                    value={form.due_date}
-                    onChange={handleFormChange}
-                    className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <CategorySelect
-                    value={form.category}
-                    onChange={handleCategoryChange}
-                    label="Category *"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    name="is_recurring"
-                    checked={form.is_recurring}
-                    onChange={handleFormChange}
-                    className="form-checkbox h-4 w-4 text-blue-600"
-                  />
-                  <label className="text-gray-300">Recurring</label>
-                </div>
-                {form.is_recurring && (
-                  <div>
-                    <label className="block text-gray-300 mb-1">Frequency *</label>
-                    <select
-                      name="recurring_frequency"
-                      value={form.recurring_frequency || ''}
-                      onChange={handleFormChange}
-                      className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Select frequency</option>
-                      {FREQUENCIES.map(freq => (
-                        <option key={freq} value={freq}>{freq.charAt(0).toUpperCase() + freq.slice(1)}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-                <div>
-                  <label className="block text-gray-300 mb-1">Notes</label>
-                  <input
-                    type="text"
-                    name="notes"
-                    value={form.notes}
-                    onChange={handleFormChange}
-                    className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    name="excluded_from_paycheck"
-                    checked={form.excluded_from_paycheck}
-                    onChange={handleFormChange}
-                    className="form-checkbox h-4 w-4 text-blue-600"
-                  />
-                  <label className="text-gray-300">Exclude from paycheck calculation</label>
-                </div>
-                {formError && <div className="text-red-400 text-sm">{formError}</div>}
-              </div>
-              <div className="flex justify-end mt-6">
-                <button
-                  onClick={closeModal}
-                  className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium"
-                  disabled={saving}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  className="ml-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
-                  disabled={saving}
-                >
-                  {saving ? 'Saving...' : 'Update'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Unified Expense Modal */}
+        <ExpenseModal
+          isOpen={showModal}
+          onClose={closeModal}
+          onSave={handleSaveExpense}
+          expense={editingExpense}
+          mode={modalMode}
+        />
 
         {/* Delete Confirmation Modal */}
         {showDeleteModal && deletingExpense && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
-              <div className="flex items-center mb-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-xl shadow-lg w-full max-w-md md:w-1/2 md:max-w-2xl max-h-[90vh] overflow-y-auto relative">
+              {/* Header */}
+              <div className="sticky top-0 bg-gray-800 rounded-t-xl px-6 py-4 border-b border-gray-700 flex items-center gap-3">
                 <div className="flex-shrink-0">
                   <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
                     <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -558,41 +283,41 @@ export default function Expenses() {
                     </svg>
                   </div>
                 </div>
-                <div className="ml-3">
-                  <h3 className="text-lg font-medium text-white">Delete Expense</h3>
-                </div>
+                <h3 className="text-lg md:text-xl font-bold text-white">Delete Expense</h3>
               </div>
-              
-              <div className="mb-6">
+              {/* Content */}
+              <div className="px-6 py-4">
                 <p className="text-gray-300 mb-2">
                   Are you sure you want to delete this expense?
                 </p>
-                <div className="bg-gray-700 rounded-lg p-3">
+                <div className="bg-gray-700 rounded-lg p-3 mb-2">
                   <p className="text-white font-medium">{deletingExpense.name}</p>
                   <p className="text-gray-400 text-sm">
-                    {formatCurrency(deletingExpense.amount)} • Due {deletingExpense.due_date}
+                    {formatCurrency(deletingExpense.amount)} • Due {formatDueDateForDisplay(deletingExpense)}
                   </p>
                 </div>
                 <p className="text-gray-400 text-sm mt-2">
                   This action cannot be undone.
                 </p>
               </div>
-
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={cancelDelete}
-                  className="px-4 py-2 text-gray-300 hover:text-white font-medium"
-                  disabled={deleting === deletingExpense.id}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmDelete}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium disabled:opacity-50"
-                  disabled={deleting === deletingExpense.id}
-                >
-                  {deleting === deletingExpense.id ? 'Deleting...' : 'Delete'}
-                </button>
+              {/* Footer */}
+              <div className="sticky bottom-0 bg-gray-800 rounded-b-xl px-6 py-4 border-t border-gray-700">
+                <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
+                  <button
+                    onClick={cancelDelete}
+                    className="w-full sm:w-auto px-4 py-2 text-gray-300 hover:text-white font-medium"
+                    disabled={deleting === deletingExpense.id}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmDelete}
+                    className="w-full sm:w-auto px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium disabled:opacity-50"
+                    disabled={deleting === deletingExpense.id}
+                  >
+                    {deleting === deletingExpense.id ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
