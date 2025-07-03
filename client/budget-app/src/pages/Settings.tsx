@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { profileService } from '../services/profileService';
 import type { ProfileUpdate } from '../types/profile';
-import { Link } from 'react-router-dom';
 import AvatarSelector from '../components/AvatarSelector';
+import Header from '../components/Header';
 
 export default function Settings() {
   const [loading, setLoading] = useState(true);
@@ -76,6 +76,9 @@ export default function Settings() {
     }
   };
 
+  const displayName = formData.display_name || '';
+  const avatarId = formData.avatar_id || 'cat';
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -86,18 +89,7 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen bg-gray-900">
-      <nav className="bg-gray-800 shadow-lg border-b border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Link to="/dashboard" className="text-gray-300 hover:text-white mr-4">
-                ← Back to Dashboard
-              </Link>
-              <h1 className="text-xl font-semibold text-white">Settings</h1>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Header displayName={displayName} avatarId={avatarId} onLogout={() => { /* TODO: implement logout */ }} />
 
       <main className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">

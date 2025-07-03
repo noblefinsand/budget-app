@@ -1,6 +1,4 @@
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
-import Avatar from '../components/Avatar';
 import { useState, useEffect } from 'react';
 import { profileService } from '../services/profileService';
 import { expenseService } from '../services/expenseService';
@@ -10,6 +8,7 @@ import WelcomeModal from '../components/WelcomeModal';
 import ExpenseCalendar from '../components/ExpenseCalendar';
 import ExpenseViewModal from '../components/ExpenseViewModal';
 import ExpenseModal from '../components/ExpenseModal';
+import Header from '../components/Header';
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -20,9 +19,9 @@ export default function Dashboard() {
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const displayName = user?.user_metadata?.display_name || user?.email;
+  const displayName = profile ? (profile.display_name || user?.email || '') : '';
+  const avatarId = profile ? (profile.avatar_id || 'cat') : '';
 
   useEffect(() => {
     loadProfile();
@@ -117,107 +116,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-900">
-      {/* Mobile menu overlay */}
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-60 z-40"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
-      {/* Mobile slide-out menu */}
-      <div
-        className={`fixed top-0 left-0 h-full z-50 bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out
-          ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-          w-2/3 max-w-xs md:hidden flex flex-col`}
-        style={{ minWidth: 220 }}
-      >
-        <div className="flex items-center p-4 border-b border-gray-700">
-          <span className="text-white font-semibold text-lg">Budget Buddy</span>
-        </div>
-        <nav className="flex flex-col p-4 space-y-2">
-          <Link
-            to="/expenses"
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-base font-medium transition-colors duration-200"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            Expenses
-          </Link>
-          <Link
-            to="/settings"
-            className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-base font-medium transition-colors duration-200"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            Settings
-          </Link>
-          <button
-            onClick={() => {
-              logout();
-              setMobileMenuOpen(false);
-            }}
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-base font-medium transition-colors duration-200 text-left"
-          >
-            Logout
-          </button>
-        </nav>
-      </div>
-
-      {/* Navigation */}
-      <nav className="bg-gray-800 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Mobile menu button */}
-            <button
-              onClick={() => setMobileMenuOpen(true)}
-              className="md:hidden p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-            >
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-
-            <div className="flex items-center justify-between w-full">
-              {/* Desktop/tablet: Budget Buddy dashboard link */}
-              <button 
-                onClick={() => {
-                  loadProfile();
-                  loadExpenses();
-                }}
-                className="hidden md:inline text-xl font-semibold text-white hover:text-blue-400 transition-colors duration-200 cursor-pointer"
-              >
-                Budget Buddy
-              </button>
-              {/* Mobile: avatar and username only */}
-              <div className="flex items-center space-x-3 md:hidden">
-                <Avatar avatarId={profile?.avatar_id || 'cat'} size="sm" />
-                <span className="text-white font-semibold text-lg">{displayName}</span>
-              </div>
-              {/* Desktop/tablet nav actions */}
-              <div className="hidden md:flex items-center space-x-4">
-                <Avatar avatarId={profile?.avatar_id || 'cat'} size="sm" />
-                <span className="text-gray-300">Welcome, {displayName}</span>
-                <Link
-                  to="/expenses"
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
-                >
-                  Expenses
-                </Link>
-                <Link
-                  to="/settings"
-                  className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
-                >
-                  Settings
-                </Link>
-                <button
-                  onClick={logout}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
-                >
-                  Logout
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Header displayName={displayName} avatarId={avatarId} onLogout={logout} />
       
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
@@ -226,19 +125,6 @@ export default function Dashboard() {
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
                 <p className="text-gray-400">Loading expenses...</p>
-              </div>
-            </div>
-          ) : expenses.length === 0 ? (
-            <div className="border-2 border-dashed border-gray-600 rounded-xl h-96 flex items-center justify-center bg-gray-800/50">
-              <div className="text-center">
-                <h3 className="text-xl font-semibold text-white mb-2">No expenses yet</h3>
-                <p className="text-gray-400 mb-4">Add your first expense to see it on the calendar</p>
-                <Link
-                  to="/expenses"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-                >
-                  Add Expense
-                </Link>
               </div>
             </div>
           ) : (
@@ -255,7 +141,6 @@ export default function Dashboard() {
         isOpen={!!selectedExpense}
         onClose={handleCloseModal}
         onEdit={handleEditExpense}
-        currency={profile?.currency || 'USD'}
       />
       <WelcomeModal 
         isOpen={showWelcomeModal} 
