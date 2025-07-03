@@ -7,6 +7,7 @@ export interface Profile {
   currency: string;
   timezone: string;
   paycheck_frequency: PaycheckFrequency;
+  paycheck_reference_date: string | null;
   has_completed_welcome: boolean;
   created_at: string;
   updated_at: string;
@@ -18,5 +19,6 @@ export interface ProfileUpdate {
   currency?: string;
   timezone?: string;
   paycheck_frequency?: PaycheckFrequency;
+  paycheck_reference_date?: string | null;
   has_completed_welcome?: boolean;
 } 

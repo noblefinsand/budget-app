@@ -18,7 +18,8 @@ export default function WelcomeModal({ isOpen, onComplete }: WelcomeModalProps) 
     avatar_id: 'cat',
     currency: 'USD',
     timezone: 'UTC',
-    paycheck_frequency: 'bi-weekly'
+    paycheck_frequency: 'bi-weekly',
+    paycheck_reference_date: ''
   });
 
   // Load current profile data when modal opens
@@ -37,7 +38,8 @@ export default function WelcomeModal({ isOpen, onComplete }: WelcomeModalProps) 
           avatar_id: profileData.avatar_id,
           currency: profileData.currency,
           timezone: profileData.timezone,
-          paycheck_frequency: profileData.paycheck_frequency
+          paycheck_frequency: profileData.paycheck_frequency,
+          paycheck_reference_date: profileData.paycheck_reference_date || ''
         });
       }
     } catch (error) {
@@ -63,6 +65,12 @@ export default function WelcomeModal({ isOpen, onComplete }: WelcomeModalProps) 
   const handleSubmit = async () => {
     setLoading(true);
     setError(null);
+
+    if (!formData.paycheck_reference_date || formData.paycheck_reference_date.trim() === '') {
+      setError('Reference paycheck date is required');
+      setLoading(false);
+      return;
+    }
 
     try {
       const updatedProfile = await profileService.updateProfile({
@@ -112,6 +120,9 @@ export default function WelcomeModal({ isOpen, onComplete }: WelcomeModalProps) 
     setStep(step - 1);
     setError(null);
   };
+
+  // In the preferences step, determine if the button should be disabled
+  const isPreferencesValid = !!formData.paycheck_reference_date && formData.paycheck_reference_date.trim() !== '';
 
   if (!isOpen) return null;
 
@@ -212,6 +223,20 @@ export default function WelcomeModal({ isOpen, onComplete }: WelcomeModalProps) 
                   <option value="monthly">Monthly</option>
                 </select>
               </div>
+              <div>
+                <label htmlFor="paycheck_reference_date" className="block text-sm font-medium text-gray-300 mb-2">
+                  Reference Paycheck Date <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  id="paycheck_reference_date"
+                  name="paycheck_reference_date"
+                  value={formData.paycheck_reference_date || ''}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                />
+                <p className="text-gray-400 text-xs mt-1">This date is used as the starting point for your paycheck cycle.</p>
+              </div>
             </div>
           )}
 
@@ -255,8 +280,8 @@ export default function WelcomeModal({ isOpen, onComplete }: WelcomeModalProps) 
               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={loading}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                disabled={loading || !isPreferencesValid}
+                className={`bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 ${loading || !isPreferencesValid ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {loading ? 'Setting up...' : 'Get Started'}
               </button>
