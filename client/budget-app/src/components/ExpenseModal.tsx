@@ -282,17 +282,6 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense, mode }:
             />
           </div>
 
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="excluded_from_paycheck"
-              checked={form.excluded_from_paycheck}
-              onChange={handleFormChange}
-              className="form-checkbox h-4 w-4 text-blue-600"
-            />
-            <label className="text-gray-300">Exclude from paycheck calculation</label>
-          </div>
-
           {formError && <div className="text-red-400 text-sm">{formError}</div>}
         </div>
         </div>

@@ -212,4 +212,69 @@ function generateYearlyDates(
     dates.push(new Date(currentDate));
     currentDate.setFullYear(currentDate.getFullYear() + 1);
   }
+}
+
+/**
+ * Calculate the current budget period (start and end dates) based on reference date, frequency, and today.
+ * @param referenceDate - ISO string (YYYY-MM-DD)
+ * @param frequency - 'weekly' | 'bi-weekly' | 'monthly' | 'semi-monthly'
+ * @param today - Date object (defaults to new Date())
+ * @returns { periodStart: Date, periodEnd: Date }
+ */
+export function getCurrentBudgetPeriod(
+  referenceDate: string,
+  frequency: 'weekly' | 'bi-weekly' | 'monthly' | 'semi-monthly',
+  today: Date = new Date()
+): { periodStart: Date; periodEnd: Date } {
+  // Parse referenceDate as local time
+  const [year, month, day] = referenceDate.split('-').map(Number);
+  const ref = new Date(year, month - 1, day);
+  const t = new Date(today.getFullYear(), today.getMonth(), today.getDate()); // strip time
+
+  if (frequency === 'weekly' || frequency === 'bi-weekly') {
+    const days = frequency === 'weekly' ? 7 : 14;
+    const diff = Math.floor((t.getTime() - ref.getTime()) / (1000 * 60 * 60 * 24));
+    const periodsSinceRef = Math.floor(diff / days);
+    const periodStart = new Date(ref);
+    periodStart.setDate(ref.getDate() + periodsSinceRef * days);
+    const periodEnd = new Date(periodStart);
+    periodEnd.setDate(periodStart.getDate() + days - 1);
+    return { periodStart, periodEnd };
+  }
+
+  if (frequency === 'monthly') {
+    // Each period starts on the same day-of-month as the reference date
+    const refDay = ref.getDate();
+    let periodStart = new Date(t.getFullYear(), t.getMonth(), refDay);
+    if (t < periodStart) {
+      // We're in the previous period
+      periodStart = new Date(t.getFullYear(), t.getMonth() - 1, refDay);
+    }
+    let periodEnd = new Date(periodStart.getFullYear(), periodStart.getMonth() + 1, refDay);
+    periodEnd.setDate(periodEnd.getDate() - 1);
+    return { periodStart, periodEnd };
+  }
+
+  if (frequency === 'semi-monthly') {
+    // 1st–15th and 16th–end of month
+    const year = t.getFullYear();
+    const month = t.getMonth();
+    if (t.getDate() < 16) {
+      // First half
+      return {
+        periodStart: new Date(year, month, 1),
+        periodEnd: new Date(year, month, 15)
+      };
+    } else {
+      // Second half
+      const lastDay = new Date(year, month + 1, 0).getDate();
+      return {
+        periodStart: new Date(year, month, 16),
+        periodEnd: new Date(year, month, lastDay)
+      };
+    }
+  }
+
+  // Default: just return today as both start and end
+  return { periodStart: t, periodEnd: t };
 } 
