@@ -119,7 +119,6 @@ export default function Dashboard() {
     recurring_frequency: RecurringFrequency | null;
     recurring_pattern: string | null;
     notes: string;
-    excluded_from_paycheck: boolean;
   }) => {
     if (editingExpense) {
       const updatedExpense = await expenseService.updateExpense(editingExpense.id, {
@@ -130,8 +129,7 @@ export default function Dashboard() {
         is_recurring: expenseData.is_recurring,
         recurring_frequency: expenseData.recurring_frequency || undefined,
         recurring_pattern: expenseData.recurring_pattern,
-        notes: expenseData.notes,
-        excluded_from_paycheck: expenseData.excluded_from_paycheck
+        notes: expenseData.notes
       });
       if (updatedExpense) {
         setExpenses(prev => prev.map(exp => exp.id === editingExpense.id ? updatedExpense : exp));

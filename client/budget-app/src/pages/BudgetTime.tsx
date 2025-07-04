@@ -3,9 +3,14 @@ import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 import { profileService } from '../services/profileService';
 import type { Profile } from '../types/profile';
-import { getCurrentBudgetPeriod } from '../utils/dateFormat';
+import { getCurrentBudgetPeriod, generateRecurringDates, formatDueDateForDisplay, formatSpecificDateForDisplay } from '../utils/dateFormat';
 import { expenseService } from '../services/expenseService';
 import type { Expense } from '../types/expense';
+
+// Local interface for expanded expenses with occurrence dates
+interface ExpandedExpense extends Expense {
+  _occurrenceDate?: Date;
+}
 
 export default function BudgetTime() {
   const { user, logout } = useAuth();
@@ -18,6 +23,11 @@ export default function BudgetTime() {
   const [oneTimeExpenses, setOneTimeExpenses] = useState<Expense[]>([]);
   const [oneTimeTouched, setOneTimeTouched] = useState<{ name: boolean; amount: boolean }>({ name: false, amount: false });
   const [excludedExpenseIds, setExcludedExpenseIds] = useState<string[]>([]);
+  
+  // Manual period override for early paydays
+  const [useManualPeriod, setUseManualPeriod] = useState(false);
+  const [manualPeriodStart, setManualPeriodStart] = useState('');
+  const [manualPeriodEnd, setManualPeriodEnd] = useState('');
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -48,7 +58,13 @@ export default function BudgetTime() {
   // Calculate current budget period
   let periodStart: Date | null = null;
   let periodEnd: Date | null = null;
-  if (profile?.paycheck_reference_date && profile?.paycheck_frequency) {
+
+  if (useManualPeriod && manualPeriodStart && manualPeriodEnd) {
+    // Use manual period override
+    periodStart = parseLocalDate(manualPeriodStart);
+    periodEnd = parseLocalDate(manualPeriodEnd);
+  } else if (profile?.paycheck_reference_date && profile?.paycheck_frequency) {
+    // Use calculated period based on reference date
     const period = getCurrentBudgetPeriod(
       profile.paycheck_reference_date,
       profile.paycheck_frequency
@@ -62,17 +78,57 @@ export default function BudgetTime() {
     return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
   }
 
-  // Helper to check if a date is within the current period
-  function isWithinPeriod(dateStr: string, start: Date, end: Date) {
-    const d = new Date(dateStr);
-    return d >= start && d <= end;
+  // Helper to parse YYYY-MM-DD as local date (same as calendar)
+  function parseLocalDate(dateString: string): Date {
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
   }
 
-  // Filter expenses for current period
-  const periodExpenses = expenses.filter(exp => {
-    if (!periodStart || !periodEnd) return false;
-    return isWithinPeriod(exp.due_date, periodStart, periodEnd);
-  });
+  // Expand recurring expenses into all their occurrences within the current period
+  function expandRecurringExpenses(expenses: Expense[], periodStart: Date, periodEnd: Date): ExpandedExpense[] {
+    const expanded: ExpandedExpense[] = [];
+    for (const exp of expenses) {
+      if (exp.is_recurring && exp.recurring_frequency && exp.recurring_pattern) {
+        const dates = generateRecurringDates(
+          exp.due_date,
+          exp.recurring_pattern,
+          exp.recurring_frequency,
+          1 // only need to generate for the current period
+        );
+        // Filter out dates that are before the original due date (same as calendar)
+        const originalDueDate = parseLocalDate(exp.due_date);
+        const validDates = dates.filter(date => date >= originalDueDate);
+        
+        for (const date of validDates) {
+          if (date >= periodStart && date <= periodEnd) {
+            const dateString = date.toLocaleDateString('en-CA'); // YYYY-MM-DD format
+            expanded.push({
+              ...exp,
+              id: `${exp.id}-${dateString}`,
+              due_date: dateString,
+              // Store the actual Date object for display
+              _occurrenceDate: date,
+            });
+          }
+        }
+      } else {
+        // One-time or non-recurring
+        const dueDate = parseLocalDate(exp.due_date);
+        if (dueDate >= periodStart && dueDate <= periodEnd) {
+          expanded.push({
+            ...exp,
+            _occurrenceDate: dueDate,
+          });
+        }
+      }
+    }
+    return expanded;
+  }
+
+  // Use expanded recurring expenses for periodExpenses
+  const periodExpenses = (periodStart && periodEnd)
+    ? expandRecurringExpenses(expenses, periodStart, periodEnd)
+    : [];
 
   // Helper to check if an expense is excluded
   function isExcluded(expenseId: string) {
@@ -113,8 +169,7 @@ export default function BudgetTime() {
       updated_at: new Date().toISOString(),
       user_id: user?.id || '',
       recurring_frequency: null,
-      recurring_pattern: null,
-      excluded_from_paycheck: false
+      recurring_pattern: null
     };
     setOneTimeExpenses(prev => [...prev, newExpense]);
     setOneTimeName('');
@@ -155,10 +210,78 @@ export default function BudgetTime() {
                 placeholder="Enter your paycheck amount"
               />
             </div>
+            
+            {/* Manual Period Override */}
+            <div className="mb-6">
+              <div className="flex items-center gap-3 mb-3">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={useManualPeriod}
+                    onChange={e => setUseManualPeriod(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+                  />
+                  <span className="text-gray-300 text-base font-semibold">Use custom budget period</span>
+                </label>
+                <span className="text-xs text-gray-400">(for early paydays, etc.)</span>
+              </div>
+              
+              {useManualPeriod && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gray-700/30 rounded-lg">
+                  <div>
+                    <label className="block text-gray-300 text-sm font-medium mb-1">Period Start</label>
+                    <input
+                      type="date"
+                      value={manualPeriodStart}
+                      onChange={e => setManualPeriodStart(e.target.value)}
+                      className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-300 text-sm font-medium mb-1">Period End</label>
+                    <input
+                      type="date"
+                      value={manualPeriodEnd}
+                      onChange={e => setManualPeriodEnd(e.target.value)}
+                      className="w-full px-3 py-2 bg-gray-700/50 border border-gray-600 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
             {periodStart && periodEnd && (
               <div className="mb-4">
-                <p className="text-gray-300 text-base font-semibold">Current Period:</p>
+                <p className="text-gray-300 text-base font-semibold">
+                  {useManualPeriod ? 'Custom Period:' : 'Current Period:'}
+                </p>
                 <p className="text-blue-400 text-lg sm:text-xl font-bold">{formatDate(periodStart)} – {formatDate(periodEnd)}</p>
+                {useManualPeriod && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    Next normal payday: {profile?.paycheck_reference_date && profile?.paycheck_frequency ? 
+                      (() => {
+                        // Calculate the next normal payday after the custom period ends
+                        const normalPeriod = getCurrentBudgetPeriod(profile.paycheck_reference_date, profile.paycheck_frequency);
+                        const customPeriodEnd = periodEnd;
+                        
+                        // If the normal period start is before or during our custom period, 
+                        // calculate the next one after our custom period ends
+                        if (normalPeriod.periodStart <= customPeriodEnd) {
+                          const daysInPeriod = profile.paycheck_frequency === 'weekly' ? 7 : 
+                                             profile.paycheck_frequency === 'bi-weekly' ? 14 : 
+                                             profile.paycheck_frequency === 'monthly' ? 30 : 15;
+                          
+                          const periodsToAdd = Math.ceil((customPeriodEnd.getTime() - normalPeriod.periodStart.getTime()) / (daysInPeriod * 24 * 60 * 60 * 1000));
+                          const nextPayday = new Date(normalPeriod.periodStart);
+                          nextPayday.setDate(normalPeriod.periodStart.getDate() + (periodsToAdd * daysInPeriod));
+                          return formatDate(nextPayday);
+                        } else {
+                          return formatDate(normalPeriod.periodStart);
+                        }
+                      })() : 
+                      'Not set'
+                    }
+                  </p>
+                )}
               </div>
             )}
             {/* Responsive description text */}
@@ -181,6 +304,12 @@ export default function BudgetTime() {
                     >
                       <span className="text-gray-200 text-base flex items-center gap-3">
                         {exp.name}
+                        <span className="ml-1 text-xs text-gray-400">
+                          {(exp as ExpandedExpense)._occurrenceDate 
+                            ? formatSpecificDateForDisplay((exp as ExpandedExpense)._occurrenceDate!)
+                            : formatDueDateForDisplay(exp)
+                          }
+                        </span>
                         {exp.is_recurring && (
                           <span className="ml-2 text-xs text-blue-400 bg-blue-900/30 px-2 py-0.5 rounded-full">Recurring</span>
                         )}
