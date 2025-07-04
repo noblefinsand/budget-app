@@ -10,9 +10,11 @@ import ExpenseViewModal from '../components/ExpenseViewModal';
 import ExpenseModal from '../components/ExpenseModal';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 import Header from '../components/Header';
+import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,8 +71,7 @@ export default function Dashboard() {
 
   const handleWelcomeComplete = () => {
     setShowWelcomeModal(false);
-    // Reload profile to get updated data
-    loadProfile();
+    navigate('/expenses');
   };
 
   const handleExpenseClick = (expense: Expense) => {

@@ -62,34 +62,6 @@ export default function WelcomeModal({ isOpen, onComplete }: WelcomeModalProps) 
     }));
   };
 
-  const handleSubmit = async () => {
-    setLoading(true);
-    setError(null);
-
-    if (!formData.paycheck_reference_date || formData.paycheck_reference_date.trim() === '') {
-      setError('Reference paycheck date is required');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const updatedProfile = await profileService.updateProfile({
-        ...formData,
-        has_completed_welcome: true
-      });
-      if (updatedProfile) {
-        onComplete();
-      } else {
-        setError('Failed to save profile settings');
-      }
-    } catch (error) {
-      console.error('Error saving profile:', error);
-      setError('Failed to save profile settings');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSkip = async () => {
     setLoading(true);
     setError(null);
@@ -121,8 +93,30 @@ export default function WelcomeModal({ isOpen, onComplete }: WelcomeModalProps) 
     setError(null);
   };
 
-  // In the preferences step, determine if the button should be disabled
-  const isPreferencesValid = !!formData.paycheck_reference_date && formData.paycheck_reference_date.trim() !== '';
+  // Add a new step for How It Works
+  const totalSteps = 3;
+
+  // Add a handler for the Finish button on the How It Works step
+  const handleFinish = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const updatedProfile = await profileService.updateProfile({
+        ...formData,
+        has_completed_welcome: true
+      });
+      if (updatedProfile) {
+        onComplete();
+      } else {
+        setError('Failed to save profile settings');
+      }
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      setError('Failed to save profile settings');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -143,7 +137,7 @@ export default function WelcomeModal({ isOpen, onComplete }: WelcomeModalProps) 
           {/* Progress */}
           <div className="flex justify-center mb-6">
             <div className="flex space-x-2">
-              {[1, 2].map((stepNumber) => (
+              {[1, 2, 3].map((stepNumber) => (
                 <div
                   key={stepNumber}
                   className={`w-3 h-3 rounded-full ${
@@ -240,6 +234,24 @@ export default function WelcomeModal({ isOpen, onComplete }: WelcomeModalProps) 
             </div>
           )}
 
+          {/* Step 3: How It Works */}
+          {step === 3 && (
+            <div className="space-y-6">
+              <h3 className="text-xl font-bold text-white text-center">How It Works</h3>
+              <ul className="space-y-4 text-gray-300 text-base">
+                <li>
+                  <span className="font-semibold text-blue-400">1. Add Recurring Expenses:</span> On the <span className="font-semibold">Expenses</span> page, add your regular bills and subscriptions as recurring expenses.
+                </li>
+                <li>
+                  <span className="font-semibold text-blue-400">2. See Your Calendar:</span> Your <span className="font-semibold">Dashboard</span> shows all your expenses on a calendar, so you never miss a due date.
+                </li>
+                <li>
+                  <span className="font-semibold text-blue-400">3. Budget Time!</span> When you get paid, go to the <span className="font-semibold">Budget Time</span> page. Enter your paycheck amount, and we'll automatically deduct your expenses to show what's left. You can also add one-time expenses and exclude any you don't want to count this period.
+                </li>
+              </ul>
+            </div>
+          )}
+
           {/* Error Message */}
           {error && (
             <div className="bg-red-900/30 border border-red-800/50 text-red-400 rounded-lg p-3 text-sm">
@@ -268,7 +280,7 @@ export default function WelcomeModal({ isOpen, onComplete }: WelcomeModalProps) 
               </button>
             )}
             
-            {step < 2 ? (
+            {step < totalSteps ? (
               <button
                 type="button"
                 onClick={nextStep}
@@ -279,11 +291,11 @@ export default function WelcomeModal({ isOpen, onComplete }: WelcomeModalProps) 
             ) : (
               <button
                 type="button"
-                onClick={handleSubmit}
-                disabled={loading || !isPreferencesValid}
-                className={`bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 ${loading || !isPreferencesValid ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onClick={handleFinish}
+                disabled={loading}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
               >
-                {loading ? 'Setting up...' : 'Get Started'}
+                {loading ? 'Finishing...' : 'Finish'}
               </button>
             )}
           </div>
