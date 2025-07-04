@@ -193,26 +193,24 @@ export default function BudgetTime() {
   return (
     <div className="min-h-screen bg-gray-900">
       <Header displayName={displayName} avatarId={avatarId} onLogout={logout} />
-      <main className="max-w-6xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="bg-gray-800 rounded-xl shadow-lg max-w-3xl w-full mx-auto p-6 sm:p-8">
+      <div className="flex flex-col lg:flex-row gap-8 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col gap-6">
+          {/* Paycheck Input */}
+          <div className="bg-gray-800 rounded-xl shadow p-6 flex flex-col gap-2">
             <h1 className="text-2xl sm:text-3xl font-bold text-white mb-4">Budget Time</h1>
-            <div className="mb-6">
-              <label htmlFor="paycheckAmount" className="block text-gray-300 text-base font-semibold mb-2">Paycheck Amount</label>
-              <input
-                id="paycheckAmount"
-                type="number"
-                min="0"
-                step="0.01"
-                value={paycheckAmount}
-                onChange={e => setPaycheckAmount(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 mb-2"
-                placeholder="Enter your paycheck amount"
-              />
-            </div>
-            
-            {/* Manual Period Override */}
-            <div className="mb-6">
+            <label htmlFor="paycheckAmount" className="block text-gray-300 text-base font-semibold mb-2">Paycheck Amount</label>
+            <input
+              id="paycheckAmount"
+              type="number"
+              min="0"
+              step="0.01"
+              value={paycheckAmount}
+              onChange={e => setPaycheckAmount(e.target.value)}
+              className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 mb-2"
+              placeholder="Enter your paycheck amount"
+            />
+            <div className="mt-2">
               <div className="flex items-center gap-3 mb-3">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -225,7 +223,6 @@ export default function BudgetTime() {
                 </label>
                 <span className="text-xs text-gray-400">(for early paydays, etc.)</span>
               </div>
-              
               {useManualPeriod && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gray-700/30 rounded-lg">
                   <div>
@@ -250,7 +247,7 @@ export default function BudgetTime() {
               )}
             </div>
             {periodStart && periodEnd && (
-              <div className="mb-4">
+              <div className="mt-4">
                 <p className="text-gray-300 text-base font-semibold">
                   {useManualPeriod ? 'Custom Period:' : 'Current Period:'}
                 </p>
@@ -259,17 +256,12 @@ export default function BudgetTime() {
                   <p className="text-xs text-gray-400 mt-1">
                     Next normal payday: {profile?.paycheck_reference_date && profile?.paycheck_frequency ? 
                       (() => {
-                        // Calculate the next normal payday after the custom period ends
                         const normalPeriod = getCurrentBudgetPeriod(profile.paycheck_reference_date, profile.paycheck_frequency);
                         const customPeriodEnd = periodEnd;
-                        
-                        // If the normal period start is before or during our custom period, 
-                        // calculate the next one after our custom period ends
                         if (normalPeriod.periodStart <= customPeriodEnd) {
                           const daysInPeriod = profile.paycheck_frequency === 'weekly' ? 7 : 
-                                             profile.paycheck_frequency === 'bi-weekly' ? 14 : 
-                                             profile.paycheck_frequency === 'monthly' ? 30 : 15;
-                          
+                                                 profile.paycheck_frequency === 'bi-weekly' ? 14 : 
+                                                 profile.paycheck_frequency === 'monthly' ? 30 : 15;
                           const periodsToAdd = Math.ceil((customPeriodEnd.getTime() - normalPeriod.periodStart.getTime()) / (daysInPeriod * 24 * 60 * 60 * 1000));
                           const nextPayday = new Date(normalPeriod.periodStart);
                           nextPayday.setDate(normalPeriod.periodStart.getDate() + (periodsToAdd * daysInPeriod));
@@ -284,135 +276,149 @@ export default function BudgetTime() {
                 )}
               </div>
             )}
-            {/* Responsive description text */}
-            <p className="text-gray-300 mb-2 text-base hidden sm:block">
-              This is where you'll enter your paycheck, see your recurring expenses, add one-time expenses, and track your budget for this period.
-            </p>
-            <p className="text-gray-300 mb-2 text-base sm:hidden">
-              Enter your paycheck and track your budget.
-            </p>
-            <div className="mt-6">
-              <h2 className="text-xl text-white font-semibold mb-2">Expenses This Period</h2>
-              <ul className="divide-y divide-gray-700">
-                {[...periodExpenses, ...oneTimeExpenses].map(exp => {
-                  const isLocalOneTime = oneTimeExpenses.some(e => e.id === exp.id);
-                  const excluded = isExcluded(exp.id);
-                  return (
-                    <li
-                      key={exp.id}
-                      className={`py-2 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 ${excluded ? 'opacity-50' : ''}`}
-                    >
-                      <span className="text-gray-200 text-base flex items-center gap-3">
-                        {exp.name}
-                        <span className="ml-1 text-xs text-gray-400">
-                          {(exp as ExpandedExpense)._occurrenceDate 
-                            ? formatSpecificDateForDisplay((exp as ExpandedExpense)._occurrenceDate!)
-                            : formatDueDateForDisplay(exp)
-                          }
-                        </span>
-                        {exp.is_recurring && (
-                          <span className="ml-2 text-xs text-blue-400 bg-blue-900/30 px-2 py-0.5 rounded-full">Recurring</span>
-                        )}
-                        {!exp.is_recurring && (
-                          <span className="ml-2 text-xs text-yellow-400 bg-yellow-900/30 px-2 py-0.5 rounded-full">One-Time</span>
-                        )}
-                        {excluded && (
-                          <span className="ml-2 text-xs text-gray-400 bg-gray-700/50 px-2 py-0.5 rounded-full">Excluded</span>
-                        )}
+          </div>
+
+          {/* Expenses List */}
+          <div className="bg-gray-800 rounded-xl shadow p-6 flex flex-col gap-2">
+            <h2 className="text-xl text-white font-semibold mb-2">Expenses This Period</h2>
+            <ul className="divide-y divide-gray-700">
+              {[...periodExpenses, ...oneTimeExpenses].map(exp => {
+                const isLocalOneTime = oneTimeExpenses.some(e => e.id === exp.id);
+                const excluded = isExcluded(exp.id);
+                return (
+                  <li
+                    key={exp.id}
+                    className={`py-2 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 ${excluded ? 'opacity-50' : ''}`}
+                  >
+                    <span className="text-gray-200 text-base flex items-center gap-3">
+                      {exp.name}
+                      <span className="ml-1 text-xs text-gray-400">
+                        {(exp as ExpandedExpense)._occurrenceDate 
+                          ? formatSpecificDateForDisplay((exp as ExpandedExpense)._occurrenceDate!)
+                          : formatDueDateForDisplay(exp)
+                        }
                       </span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-400 text-base">${exp.amount.toFixed(2)}</span>
-                        {/* Exclude Switch: only for non-local (not oneTimeExpenses) */}
-                        {!isLocalOneTime && (
-                          <label className="flex items-center gap-2 cursor-pointer select-none ml-2">
-                            <span className="text-xs text-gray-400">Exclude</span>
-                            <button
-                              type="button"
-                              role="switch"
-                              aria-checked={excluded}
-                              onClick={() => handleToggleExclude(exp.id)}
-                              className={`relative inline-flex h-5 w-10 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 ${excluded ? 'bg-blue-600' : 'bg-gray-600'}`}
-                            >
-                              <span
-                                className={`inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition-transform duration-200 ${excluded ? 'translate-x-5' : 'translate-x-0'}`}
-                              />
-                            </button>
-                          </label>
-                        )}
-                        {/* Remove button for local one-time expenses (only if not excluded) */}
-                        {isLocalOneTime && !excluded && (
+                      {exp.is_recurring && (
+                        <span className="ml-2 text-xs text-blue-400 bg-blue-900/30 px-2 py-0.5 rounded-full">Recurring</span>
+                      )}
+                      {!exp.is_recurring && (
+                        <span className="ml-2 text-xs text-yellow-400 bg-yellow-900/30 px-2 py-0.5 rounded-full">One-Time</span>
+                      )}
+                      {excluded && (
+                        <span className="ml-2 text-xs text-gray-400 bg-gray-700/50 px-2 py-0.5 rounded-full">Excluded</span>
+                      )}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-400 text-base">${exp.amount.toFixed(2)}</span>
+                      {/* Exclude Switch: only for non-local (not oneTimeExpenses) */}
+                      {!isLocalOneTime && (
+                        <label className="flex items-center gap-2 cursor-pointer select-none ml-2">
+                          <span className="text-xs text-gray-400">Exclude</span>
                           <button
-                            onClick={() => handleRemoveOneTimeExpense(exp.id)}
-                            className="text-red-400 hover:text-red-600 text-xs font-semibold px-2 py-1 rounded transition-colors duration-200 ml-2"
-                            title="Remove one-time expense"
+                            type="button"
+                            role="switch"
+                            aria-checked={excluded}
+                            onClick={() => handleToggleExclude(exp.id)}
+                            className={`relative inline-flex h-5 w-10 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 ${excluded ? 'bg-blue-600' : 'bg-gray-600'}`}
                           >
-                            Remove
+                            <span
+                              className={`inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition-transform duration-200 ${excluded ? 'translate-x-5' : 'translate-x-0'}`}
+                            />
                           </button>
-                        )}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-              {/* Summary Section */}
-              <div className="mt-6 bg-gray-700/50 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <div className="text-gray-300 text-base font-semibold">Summary</div>
-                <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 text-base">
-                  <span className="text-gray-200">Included: <span className="font-bold text-green-400">${totalIncluded.toFixed(2)}</span></span>
-                  <span className="text-gray-400">Excluded: <span className="font-bold">${totalExcluded.toFixed(2)}</span></span>
-                  <span className="text-gray-200">Remaining: <span className={`font-bold ${remainingBudget < 0 ? 'text-red-400' : 'text-blue-400'}`}>${remainingBudget.toFixed(2)}</span></span>
+                        </label>
+                      )}
+                      {/* Remove button for local one-time expenses (only if not excluded) */}
+                      {isLocalOneTime && !excluded && (
+                        <button
+                          onClick={() => handleRemoveOneTimeExpense(exp.id)}
+                          className="text-red-400 hover:text-red-600 text-xs font-semibold px-2 py-1 rounded transition-colors duration-200 ml-2"
+                          title="Remove one-time expense"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
+          {/* Add One-Time Expense */}
+          <div className="bg-gray-800 rounded-xl shadow p-6 flex flex-col gap-2">
+            <h2 className="text-xl text-white font-semibold mb-2">Add One-Time Expense</h2>
+            <form onSubmit={handleAddOneTimeExpense} className="mb-4">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1 flex flex-col">
+                  <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="oneTimeName">
+                    Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="oneTimeName"
+                    type="text"
+                    value={oneTimeName}
+                    onChange={e => setOneTimeName(e.target.value)}
+                    className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {oneTimeTouched.name && !oneTimeName && (
+                    <span className="text-xs text-red-400 mt-1">Name is required</span>
+                  )}
+                </div>
+                <div className="flex-1 flex flex-col">
+                  <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="oneTimeAmount">
+                    Amount <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="oneTimeAmount"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={oneTimeAmount}
+                    onChange={e => setOneTimeAmount(e.target.value)}
+                    className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {oneTimeTouched.amount && !oneTimeAmount && (
+                    <span className="text-xs text-red-400 mt-1">Amount is required</span>
+                  )}
+                </div>
+                <div className="flex items-end">
+                  <button
+                    type="submit"
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition-colors duration-200 h-full"
+                  >
+                    Add
+                  </button>
                 </div>
               </div>
-            </div>
-            <div className="mt-6">
-              <h2 className="text-xl text-white font-semibold mb-2">Add One-Time Expense</h2>
-              <form onSubmit={handleAddOneTimeExpense} className="mb-4">
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="flex-1 flex flex-col">
-                    <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="oneTimeName">
-                      Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="oneTimeName"
-                      type="text"
-                      value={oneTimeName}
-                      onChange={e => setOneTimeName(e.target.value)}
-                      onBlur={() => setOneTimeTouched(t => ({ ...t, name: true }))}
-                      placeholder="Expense name"
-                      className={`w-full px-4 py-3 md:py-0 bg-gray-700/50 border rounded-lg text-white placeholder-gray-400 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 md:h-12 ${oneTimeTouched.name && !oneTimeName.trim() ? 'border-red-500' : 'border-gray-600'}`}
-                    />
-                  </div>
-                  <div className="w-full md:w-40 flex flex-col">
-                    <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="oneTimeAmount">
-                      Amount <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="oneTimeAmount"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={oneTimeAmount}
-                      onChange={e => setOneTimeAmount(e.target.value)}
-                      onBlur={() => setOneTimeTouched(t => ({ ...t, amount: true }))}
-                      placeholder="Amount"
-                      className={`w-full px-4 py-3 md:py-0 bg-gray-700/50 border rounded-lg text-white placeholder-gray-400 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 md:h-12 ${oneTimeTouched.amount && !oneTimeAmount ? 'border-red-500' : 'border-gray-600'}`}
-                    />
-                  </div>
-                  <div className="flex items-end md:items-end pt-5 md:pt-0">
-                    <button
-                      type="submit"
-                      disabled={!oneTimeName.trim() || !oneTimeAmount}
-                      className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 md:py-0 rounded-lg font-semibold text-base focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center md:h-12"
-                    >
-                      Add
-                    </button>
-                  </div>
-                </div>
-              </form>
-            </div>
+            </form>
           </div>
         </div>
-      </main>
+
+        {/* Sidebar (Summary Widget) */}
+        <aside className="w-full lg:w-[350px] flex-shrink-0">
+          <div className="sticky top-8">
+            <div className="bg-blue-900 rounded-xl shadow-lg p-6 flex flex-col items-center gap-4">
+              {/* Amount Left Widget */}
+              <div className="text-3xl font-bold text-white">
+                ${remainingBudget.toFixed(2)}
+              </div>
+              <div className="text-sm text-gray-300">Amount Left</div>
+              {/* Progress Bar */}
+              <div className="w-full bg-gray-700 rounded-full h-3">
+                <div
+                  className="bg-green-500 h-3 rounded-full"
+                  style={{ width: `${Math.min(100, (totalIncluded / paycheckNum) * 100)}%` }}
+                />
+              </div>
+              {/* Totals */}
+              <div className="flex justify-between w-full text-sm mt-2">
+                <span className="text-green-400">Included: ${totalIncluded.toFixed(2)}</span>
+                <span className="text-gray-400">Excluded: ${totalExcluded.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 } 
