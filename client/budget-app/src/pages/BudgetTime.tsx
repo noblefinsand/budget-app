@@ -237,42 +237,48 @@ export default function BudgetTime() {
             </div>
             <div className="mt-6">
               <h2 className="text-xl text-white font-semibold mb-2">Add One-Time Expense</h2>
-              <form onSubmit={handleAddOneTimeExpense} className="flex flex-col md:flex-row gap-4 mb-4 items-center">
-                <div className="flex-1 w-full">
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={oneTimeName}
-                    onChange={e => setOneTimeName(e.target.value)}
-                    onBlur={() => setOneTimeTouched(t => ({ ...t, name: true }))}
-                    placeholder="Expense name"
-                    className={`w-full px-4 py-2 bg-gray-700/50 border rounded-lg text-white placeholder-gray-400 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${oneTimeTouched.name && !oneTimeName.trim() ? 'border-red-500' : 'border-gray-600'}`}
-                  />
+              <form onSubmit={handleAddOneTimeExpense} className="mb-4">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex-1 flex flex-col">
+                    <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="oneTimeName">
+                      Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="oneTimeName"
+                      type="text"
+                      value={oneTimeName}
+                      onChange={e => setOneTimeName(e.target.value)}
+                      onBlur={() => setOneTimeTouched(t => ({ ...t, name: true }))}
+                      placeholder="Expense name"
+                      className={`w-full px-4 py-3 md:py-0 bg-gray-700/50 border rounded-lg text-white placeholder-gray-400 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 md:h-12 ${oneTimeTouched.name && !oneTimeName.trim() ? 'border-red-500' : 'border-gray-600'}`}
+                    />
+                  </div>
+                  <div className="w-full md:w-40 flex flex-col">
+                    <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="oneTimeAmount">
+                      Amount <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="oneTimeAmount"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={oneTimeAmount}
+                      onChange={e => setOneTimeAmount(e.target.value)}
+                      onBlur={() => setOneTimeTouched(t => ({ ...t, amount: true }))}
+                      placeholder="Amount"
+                      className={`w-full px-4 py-3 md:py-0 bg-gray-700/50 border rounded-lg text-white placeholder-gray-400 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 md:h-12 ${oneTimeTouched.amount && !oneTimeAmount ? 'border-red-500' : 'border-gray-600'}`}
+                    />
+                  </div>
+                  <div className="flex items-end md:items-end pt-5 md:pt-0">
+                    <button
+                      type="submit"
+                      disabled={!oneTimeName.trim() || !oneTimeAmount}
+                      className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 md:py-0 rounded-lg font-semibold text-base focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center md:h-12"
+                    >
+                      Add
+                    </button>
+                  </div>
                 </div>
-                <div className="w-full md:w-32">
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Amount <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={oneTimeAmount}
-                    onChange={e => setOneTimeAmount(e.target.value)}
-                    onBlur={() => setOneTimeTouched(t => ({ ...t, amount: true }))}
-                    placeholder="Amount"
-                    className={`w-full px-4 py-2 bg-gray-700/50 border rounded-lg text-white placeholder-gray-400 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${oneTimeTouched.amount && !oneTimeAmount ? 'border-red-500' : 'border-gray-600'}`}
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={!oneTimeName.trim() || !oneTimeAmount}
-                  className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold text-base focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Add
-                </button>
               </form>
             </div>
           </div>
