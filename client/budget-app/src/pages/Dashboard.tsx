@@ -174,6 +174,7 @@ export default function Dashboard() {
         onClose={handleCloseModal}
         onEdit={handleEditExpense}
         onDelete={handleDeleteExpense}
+        currency={profile?.currency}
       />
       <WelcomeModal 
         isOpen={showWelcomeModal} 
@@ -185,6 +186,7 @@ export default function Dashboard() {
         onSave={handleSaveExpense}
         expense={editingExpense}
         mode="edit"
+        currency={profile?.currency}
       />
 
       <DeleteConfirmationModal

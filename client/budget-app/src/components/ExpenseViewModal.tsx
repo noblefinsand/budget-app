@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Expense } from '../types/expense';
 import { formatDueDateForDisplay } from '../../utils/dateFormat';
+import { formatCurrency } from '../utils/currencyFormat';
 
 interface ExpenseViewModalProps {
   expense: Expense | null;
@@ -8,9 +9,10 @@ interface ExpenseViewModalProps {
   onClose: () => void;
   onEdit: (expense: Expense) => void;
   onDelete: (expense: Expense) => void;
+  currency?: string;
 }
 
-export default function ExpenseViewModal({ expense, isOpen, onClose, onEdit, onDelete }: ExpenseViewModalProps) {
+export default function ExpenseViewModal({ expense, isOpen, onClose, onEdit, onDelete, currency = 'USD' }: ExpenseViewModalProps) {
   if (!isOpen || !expense) return null;
 
   return (
@@ -32,7 +34,7 @@ export default function ExpenseViewModal({ expense, isOpen, onClose, onEdit, onD
             <div className="bg-gray-800 rounded-lg p-4 border-b border-gray-600">
               <div className="text-sm text-gray-400 mb-1">Amount</div>
               <div className="text-white font-medium text-xl text-green-400">
-                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(expense.amount)}
+                {formatCurrency(expense.amount, currency)}
               </div>
             </div>
             <div className="bg-gray-800 rounded-lg p-4 border-b border-gray-600">
@@ -42,16 +44,6 @@ export default function ExpenseViewModal({ expense, isOpen, onClose, onEdit, onD
             <div className="bg-gray-800 rounded-lg p-4 border-b border-gray-600">
               <div className="text-sm text-gray-400 mb-1">Due Date</div>
               <div className="text-white font-medium">{formatDueDateForDisplay(expense)}</div>
-            </div>
-            <div className="bg-gray-800 rounded-lg p-4 border-b border-gray-600">
-              <div className="text-sm text-gray-400 mb-1">Status</div>
-              <div className={`font-medium capitalize ${
-                expense.status === 'paid' ? 'text-green-400' : 
-                expense.status === 'overdue' ? 'text-red-400' : 
-                'text-yellow-400'
-              }`}>
-                {expense.status}
-              </div>
             </div>
             {expense.is_recurring && (
               <div className="bg-gray-800 rounded-lg p-4 border-b border-gray-600">

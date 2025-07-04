@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Expense } from '../types/expense';
 import { formatDueDateForDisplay } from '../../utils/dateFormat';
+import { formatCurrency } from '../utils/currencyFormat';
 
 interface DeleteConfirmationModalProps {
   expense: Expense | null;
@@ -21,8 +22,7 @@ export default function DeleteConfirmationModal({
 }: DeleteConfirmationModalProps) {
   if (!isOpen || !expense) return null;
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
+
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -46,7 +46,7 @@ export default function DeleteConfirmationModal({
           <div className="bg-gray-700 rounded-lg p-3 mb-2">
             <p className="text-white font-medium">{expense.name}</p>
             <p className="text-gray-400 text-sm">
-              {formatCurrency(expense.amount)} • Due {formatDueDateForDisplay(expense)}
+              {formatCurrency(expense.amount, currency)} • Due {formatDueDateForDisplay(expense)}
             </p>
           </div>
           <p className="text-gray-400 text-sm mt-2">

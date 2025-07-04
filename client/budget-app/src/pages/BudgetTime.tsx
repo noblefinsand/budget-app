@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { profileService } from '../services/profileService';
 import type { Profile } from '../types/profile';
 import { getCurrentBudgetPeriod, generateRecurringDates, formatDueDateForDisplay, formatSpecificDateForDisplay } from '../utils/dateFormat';
+import { formatCurrency, parseCurrencyInput } from '../utils/currencyFormat';
 import { expenseService } from '../services/expenseService';
 import type { Expense } from '../types/expense';
 
@@ -28,6 +29,8 @@ export default function BudgetTime() {
   const [useManualPeriod, setUseManualPeriod] = useState(false);
   const [manualPeriodStart, setManualPeriodStart] = useState('');
   const [manualPeriodEnd, setManualPeriodEnd] = useState('');
+
+
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -156,10 +159,18 @@ export default function BudgetTime() {
       valid = false;
     }
     if (!valid) return;
+    
+    // Parse the amount using international number format
+    const parsedAmount = parseCurrencyInput(oneTimeAmount, profile?.currency || 'USD');
+    if (isNaN(parsedAmount)) {
+      setOneTimeTouched(t => ({ ...t, amount: true }));
+      return;
+    }
+    
     const newExpense: Expense = {
       id: `one-time-${Date.now()}`,
       name: oneTimeName,
-      amount: parseFloat(oneTimeAmount),
+      amount: parsedAmount,
       due_date: periodStart ? periodStart.toISOString().slice(0, 10) : '',
       is_recurring: false,
       category: 'other',
@@ -187,7 +198,7 @@ export default function BudgetTime() {
   const excludedExpenses = allPeriodExpenses.filter(exp => excludedExpenseIds.includes(exp.id));
   const totalIncluded = includedExpenses.reduce((sum, exp) => sum + exp.amount, 0);
   const totalExcluded = excludedExpenses.reduce((sum, exp) => sum + exp.amount, 0);
-  const paycheckNum = parseFloat(paycheckAmount) || 0;
+  const paycheckNum = parseCurrencyInput(paycheckAmount, profile?.currency || 'USD') || 0;
   const remainingBudget = paycheckNum - totalIncluded;
 
   return (
@@ -202,9 +213,7 @@ export default function BudgetTime() {
             <label htmlFor="paycheckAmount" className="block text-gray-300 text-base font-semibold mb-2">Paycheck Amount</label>
             <input
               id="paycheckAmount"
-              type="number"
-              min="0"
-              step="0.01"
+              type="text"
               value={paycheckAmount}
               onChange={e => setPaycheckAmount(e.target.value)}
               className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 mb-2"
@@ -309,7 +318,7 @@ export default function BudgetTime() {
                       )}
                     </span>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-400 text-base">${exp.amount.toFixed(2)}</span>
+                      <span className="text-gray-400 text-base">{formatCurrency(exp.amount, profile?.currency || 'USD')}</span>
                       {/* Exclude Switch: only for non-local (not oneTimeExpenses) */}
                       {!isLocalOneTime && (
                         <label className="flex items-center gap-2 cursor-pointer select-none ml-2">
@@ -370,9 +379,7 @@ export default function BudgetTime() {
                   </label>
                   <input
                     id="oneTimeAmount"
-                    type="number"
-                    min="0"
-                    step="0.01"
+                    type="text"
                     value={oneTimeAmount}
                     onChange={e => setOneTimeAmount(e.target.value)}
                     className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -400,7 +407,7 @@ export default function BudgetTime() {
             <div className="bg-blue-900 rounded-xl shadow-lg p-6 flex flex-col items-center gap-4">
               {/* Amount Left Widget */}
               <div className="text-3xl font-bold text-white">
-                ${remainingBudget.toFixed(2)}
+                {formatCurrency(remainingBudget, profile?.currency || 'USD')}
               </div>
               <div className="text-sm text-gray-300">Amount Left</div>
               {/* Progress Bar */}
@@ -412,8 +419,8 @@ export default function BudgetTime() {
               </div>
               {/* Totals */}
               <div className="flex justify-between w-full text-sm mt-2">
-                <span className="text-green-400">Included: ${totalIncluded.toFixed(2)}</span>
-                <span className="text-gray-400">Excluded: ${totalExcluded.toFixed(2)}</span>
+                <span className="text-green-400">Included: {formatCurrency(totalIncluded, profile?.currency || 'USD')}</span>
+                <span className="text-gray-400">Excluded: {formatCurrency(totalExcluded, profile?.currency || 'USD')}</span>
               </div>
             </div>
           </div>

@@ -5,6 +5,7 @@ import type { Expense } from '../types/expense';
 import { CATEGORY_COLORS } from '../types/expense';
 import { profileService } from '../services/profileService';
 import { generateRecurringDates } from '../utils/dateFormat';
+import { formatCurrency } from '../utils/currencyFormat';
 import React from 'react';
 
 // Import calendar styles
@@ -58,8 +59,7 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
     fetchCurrency();
   }, []);
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
+
 
   // Convert expenses to calendar events
   const events: CalendarEvent[] = useMemo(() => {
@@ -80,7 +80,7 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
         validDates.forEach((date, index) => {
           allEvents.push({
             id: `${expense.id}-${index}`,
-            title: `${expense.name} - ${formatCurrency(expense.amount)}`,
+            title: `${expense.name} - ${formatCurrency(expense.amount, currency)}`,
             start: date,
             end: date,
             resource: expense,
@@ -92,7 +92,7 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
         const dueDate = parseLocalDate(expense.due_date);
         allEvents.push({
           id: expense.id,
-          title: `${expense.name} - ${formatCurrency(expense.amount)}`,
+          title: `${expense.name} - ${formatCurrency(expense.amount, currency)}`,
           start: dueDate,
           end: dueDate,
           resource: expense,
@@ -101,7 +101,7 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
       }
     });
     return allEvents;
-  }, [expenses, currency, formatCurrency]);
+  }, [expenses, currency]);
 
   // Custom event component with category colors
   const EventComponent = ({ event }: { event: CalendarEvent }) => {
@@ -111,9 +111,12 @@ export default function ExpenseCalendar({ expenses, onEventClick, className = ''
     return (
       <>
         <span className="font-semibold truncate text-xs flex-1">{event.resource.name}</span>
-        <span className="opacity-90 text-xs ml-1">{formatCurrency(event.resource.amount)}</span>
+        <span className="opacity-90 text-xs ml-1">{formatCurrency(event.resource.amount, currency)}</span>
         {event.resource.is_recurring && (
-          <span className="text-xs opacity-75 ml-1 hidden md:inline">
+          <span 
+            className="text-xs opacity-75 ml-1 hidden md:inline"
+            title={isRecurringInstance ? 'Recurring expense instance' : 'Recurring expense'}
+          >
             {isRecurringInstance ? '🔄' : '📅'}
           </span>
         )}

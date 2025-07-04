@@ -7,6 +7,7 @@ import { CATEGORY_COLORS, CATEGORIES } from '../types/expense';
 import ExpenseModal from '../components/ExpenseModal';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 import { formatDueDateForDisplay } from '../../utils/dateFormat';
+import { formatCurrency } from '../utils/currencyFormat';
 import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 
@@ -41,8 +42,7 @@ export default function Expenses() {
     setProfile(profile);
   };
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
+
 
   const handleSaveExpense = async (expenseData: {
     name: string;
@@ -228,7 +228,7 @@ export default function Expenses() {
                 <div className="flex justify-between items-start mb-4">
                   <h3 className="font-semibold text-white text-lg leading-tight pr-2">{exp.name}</h3>
                   <span className="text-xl font-bold text-green-400 flex-shrink-0">
-                    {formatCurrency(exp.amount)}
+                    {formatCurrency(exp.amount, currency)}
                   </span>
                 </div>
 
@@ -301,6 +301,7 @@ export default function Expenses() {
           onSave={handleSaveExpense}
           expense={editingExpense}
           mode={modalMode}
+          currency={currency}
         />
 
         {/* Delete Confirmation Modal */}

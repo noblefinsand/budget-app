@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { Expense, ExpenseCategory, RecurringFrequency } from '../types/expense';
 import CategorySelect from './CategorySelect';
 import RecurringDateSelector from './RecurringDateSelector';
+import { parseCurrencyInput } from '../utils/currencyFormat';
 
 interface ExpenseModalProps {
   isOpen: boolean;
@@ -18,14 +19,15 @@ interface ExpenseModalProps {
   }) => Promise<void>;
   expense?: Expense | null;
   mode: 'add' | 'edit';
+  currency?: string;
 }
 
 const FREQUENCIES: RecurringFrequency[] = ['monthly', 'bi-weekly', 'weekly', 'yearly'];
 
-export default function ExpenseModal({ isOpen, onClose, onSave, expense, mode }: ExpenseModalProps) {
+export default function ExpenseModal({ isOpen, onClose, onSave, expense, mode, currency = 'USD' }: ExpenseModalProps) {
   const [form, setForm] = useState<{
     name: string;
-    amount: number;
+    amount: string;
     due_date: string;
     category: ExpenseCategory;
     is_recurring: boolean;
@@ -33,7 +35,7 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense, mode }:
     notes: string;
   }>({
     name: '',
-    amount: 0,
+    amount: '',
     due_date: '',
     category: 'other',
     is_recurring: false,
@@ -50,7 +52,7 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense, mode }:
       if (expense && mode === 'edit') {
         setForm({
           name: expense.name,
-          amount: expense.amount,
+          amount: expense.amount.toString(),
           due_date: expense.due_date,
           category: expense.category,
           is_recurring: expense.is_recurring,
@@ -67,7 +69,7 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense, mode }:
       } else {
         setForm({
           name: '',
-          amount: 0,
+          amount: '',
           due_date: '',
           category: 'other',
           is_recurring: false,
@@ -86,6 +88,12 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense, mode }:
       setForm(prev => ({
         ...prev,
         [name]: (e.target as HTMLInputElement).checked
+      }));
+    } else if (name === 'amount') {
+      // Handle amount input with international number parsing
+      setForm(prev => ({
+        ...prev,
+        [name]: value
       }));
     } else {
       setForm(prev => ({
@@ -128,10 +136,18 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense, mode }:
     
     setSaving(true);
 
+    // Parse the amount using international number format
+    const parsedAmount = parseCurrencyInput(form.amount, currency);
+    if (isNaN(parsedAmount)) {
+      setFormError('Please enter a valid amount.');
+      setSaving(false);
+      return;
+    }
+
     // Prepare the data for storage
     const expenseData = {
       ...form,
-      amount: Number(form.amount),
+      amount: parsedAmount,
       recurring_frequency: form.is_recurring ? form.recurring_frequency || null : null,
       recurring_pattern: form.is_recurring && form.recurring_frequency
         ? (form.recurring_frequency === 'bi-weekly' ? recurringDateValue : recurringDateValue)
@@ -200,13 +216,12 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense, mode }:
           <div>
             <label className="block text-gray-300 mb-1">Amount *</label>
             <input
-              type="number"
+              type="text"
               name="amount"
               value={form.amount}
               onChange={handleFormChange}
               className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              min="0"
-              step="0.01"
+              placeholder="Enter amount"
             />
           </div>
 
