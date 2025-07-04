@@ -69,10 +69,6 @@ export default function ExpenseViewModal({ expense, isOpen, onClose, onEdit, onD
               <div className="text-sm text-gray-400 mb-2">Additional Info</div>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Excluded from paycheck:</span>
-                  <span className="text-white">{expense.excluded_from_paycheck ? 'Yes' : 'No'}</span>
-                </div>
-                <div className="flex justify-between">
                   <span className="text-gray-400">Created:</span>
                   <span className="text-white">{new Date(expense.created_at).toLocaleDateString()}</span>
                 </div>

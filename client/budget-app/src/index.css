@@ -12,4 +12,14 @@
   background: #1f2937 !important;
   color: #fff !important;
   border-bottom: 1px solid #374151 !important;
+}
+
+/* Hide number input spinners for all browsers */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
 } 
