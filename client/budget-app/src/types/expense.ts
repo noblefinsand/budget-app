@@ -55,4 +55,17 @@ export interface ExpenseUpdate {
   recurring_frequency?: RecurringFrequency;
   status?: ExpenseStatus;
   notes?: string;
-} 
+}
+
+export const CATEGORIES: ExpenseCategory[] = [
+  'housing',
+  'utilities',
+  'transportation',
+  'food',
+  'entertainment',
+  'healthcare',
+  'insurance',
+  'debt',
+  'savings',
+  'other',
+]; 
