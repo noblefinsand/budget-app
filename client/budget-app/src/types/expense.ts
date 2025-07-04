@@ -30,7 +30,6 @@ export interface Expense {
   recurring_frequency: RecurringFrequency | null;
   status: ExpenseStatus;
   notes: string | null;
-  excluded_from_paycheck: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -44,7 +43,6 @@ export interface ExpenseCreate {
   is_recurring?: boolean;
   recurring_frequency?: RecurringFrequency;
   notes?: string;
-  excluded_from_paycheck?: boolean;
 }
 
 export interface ExpenseUpdate {
@@ -57,5 +55,4 @@ export interface ExpenseUpdate {
   recurring_frequency?: RecurringFrequency;
   status?: ExpenseStatus;
   notes?: string;
-  excluded_from_paycheck?: boolean;
 } 

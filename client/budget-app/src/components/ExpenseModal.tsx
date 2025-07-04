@@ -15,7 +15,6 @@ interface ExpenseModalProps {
     recurring_frequency: RecurringFrequency | null;
     recurring_pattern: string | null;
     notes: string;
-    excluded_from_paycheck: boolean;
   }) => Promise<void>;
   expense?: Expense | null;
   mode: 'add' | 'edit';
@@ -32,7 +31,6 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense, mode }:
     is_recurring: boolean;
     recurring_frequency: RecurringFrequency | undefined;
     notes: string;
-    excluded_from_paycheck: boolean;
   }>({
     name: '',
     amount: 0,
@@ -41,7 +39,6 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense, mode }:
     is_recurring: false,
     recurring_frequency: undefined,
     notes: '',
-    excluded_from_paycheck: false
   });
   const [recurringDateValue, setRecurringDateValue] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
@@ -59,7 +56,6 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense, mode }:
           is_recurring: expense.is_recurring,
           recurring_frequency: expense.recurring_frequency || undefined,
           notes: expense.notes || '',
-          excluded_from_paycheck: expense.excluded_from_paycheck
         });
         
         // Set the recurring date value for display
@@ -77,7 +73,6 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense, mode }:
           is_recurring: false,
           recurring_frequency: undefined,
           notes: '',
-          excluded_from_paycheck: false
         });
         setRecurringDateValue('');
       }

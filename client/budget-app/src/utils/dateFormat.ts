@@ -277,4 +277,8 @@ export function getCurrentBudgetPeriod(
 
   // Default: just return today as both start and end
   return { periodStart: t, periodEnd: t };
+}
+
+export function formatSpecificDateForDisplay(date: Date): string {
+  return date.toLocaleDateString();
 } 
