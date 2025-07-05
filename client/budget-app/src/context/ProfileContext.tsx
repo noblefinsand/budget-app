@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { profileService } from '../services/profileService';
 import type { Profile, ProfileUpdate } from '../types/profile';
+import { useAuth } from './AuthContext';
 
 interface ProfileContextType {
   profile: Profile | null;
@@ -19,8 +20,9 @@ interface ProfileProviderProps {
 }
 
 export const ProfileProvider = ({ children }: ProfileProviderProps) => {
+  const { user } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadProfile = async () => {
@@ -64,8 +66,15 @@ export const ProfileProvider = ({ children }: ProfileProviderProps) => {
   };
 
   useEffect(() => {
-    loadProfile();
-  }, []);
+    if (user) {
+      loadProfile();
+    } else {
+      // Clear profile when user logs out
+      setProfile(null);
+      setError(null);
+      setLoading(false);
+    }
+  }, [user]);
 
   const value: ProfileContextType = {
     profile,
