@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { profileService } from '../services/profileService';
+import { useProfile } from '../context/ProfileContext';
 import type { ProfileUpdate } from '../types/profile';
 import AvatarSelector from '../components/AvatarSelector';
 import Header from '../components/Header';
 import LiveRegion from '../components/LiveRegion';
 
 export default function Settings() {
-  const [loading, setLoading] = useState(true);
+  const { profile, loading, error, updateProfile } = useProfile();
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -23,30 +23,26 @@ export default function Settings() {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [liveMessage, setLiveMessage] = useState('');
 
+  // Load profile data when profile changes
   useEffect(() => {
-    loadProfile();
-  }, []);
-
-  const loadProfile = async () => {
-    try {
-      const profileData = await profileService.getProfile();
-      if (profileData) {
-        setFormData({
-          display_name: profileData.display_name || '',
-          avatar_id: profileData.avatar_id || 'cat',
-          currency: profileData.currency,
-          timezone: profileData.timezone,
-          paycheck_frequency: profileData.paycheck_frequency,
-          paycheck_reference_date: profileData.paycheck_reference_date || ''
-        });
-      }
-    } catch (error) {
-      console.error('Error loading profile:', error);
-      setMessage({ type: 'error', text: 'Failed to load profile' });
-    } finally {
-      setLoading(false);
+    if (profile) {
+      setFormData({
+        display_name: profile.display_name || '',
+        avatar_id: profile.avatar_id || 'cat',
+        currency: profile.currency,
+        timezone: profile.timezone,
+        paycheck_frequency: profile.paycheck_frequency,
+        paycheck_reference_date: profile.paycheck_reference_date || ''
+      });
     }
-  };
+  }, [profile]);
+
+  // Show error from context
+  useEffect(() => {
+    if (error) {
+      setMessage({ type: 'error', text: error });
+    }
+  }, [error]);
 
   const validate = (data: typeof formData) => {
     const newErrors: { [key: string]: string } = {};
@@ -95,8 +91,8 @@ export default function Settings() {
     setLiveMessage('');
 
     try {
-      const updatedProfile = await profileService.updateProfile(formData);
-      if (updatedProfile) {
+      const success = await updateProfile(formData);
+      if (success) {
         const successMsg = 'Settings saved successfully!';
         setMessage({ type: 'success', text: successMsg });
         setLiveMessage(successMsg);

@@ -4,11 +4,20 @@ import './index.css'
 import { RouterProvider } from 'react-router-dom'
 import { router } from './router.tsx'
 import { AuthProvider } from './context/AuthContext'
+import { ProfileProvider } from './context/ProfileContext'
+import { ExpensesProvider } from './context/ExpensesContext'
+import { ModalProvider } from './context/ModalContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
-      <RouterProvider router={router} />
+      <ProfileProvider>
+        <ExpensesProvider>
+          <ModalProvider>
+            <RouterProvider router={router} />
+          </ModalProvider>
+        </ExpensesProvider>
+      </ProfileProvider>
     </AuthProvider>
   </StrictMode>,
 )

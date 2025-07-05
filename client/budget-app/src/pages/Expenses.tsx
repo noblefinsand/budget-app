@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react';
-import { expenseService } from '../services/expenseService';
-import { profileService } from '../services/profileService';
+import { useState } from 'react';
+import { useProfile } from '../context/ProfileContext';
+import { useExpenses } from '../context/ExpensesContext';
 import type { Expense, RecurringFrequency, ExpenseCategory } from '../types/expense';
-import type { Profile } from '../types/profile';
 import { CATEGORY_COLORS, CATEGORIES } from '../types/expense';
 import ExpenseModal from '../components/ExpenseModal';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
@@ -12,35 +11,20 @@ import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 
 export default function Expenses() {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [currency, setCurrency] = useState('USD');
+  const { profile } = useProfile();
+  const { expenses, addExpense, updateExpense, deleteExpense, searchExpenses } = useExpenses();
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
 
-  useEffect(() => {
-    fetchExpenses();
-    fetchProfile();
-  }, []);
-
-  const fetchExpenses = async () => {
-    const data = await expenseService.getExpenses();
-    setExpenses(data);
-  };
-
-  const fetchProfile = async () => {
-    const profile = await profileService.getProfile();
-    if (profile?.currency) setCurrency(profile.currency);
-    setProfile(profile);
-  };
+  const currency = profile?.currency || 'USD';
 
 
 
@@ -55,7 +39,7 @@ export default function Expenses() {
     notes: string;
   }) => {
     if (modalMode === 'edit' && editingExpense) {
-      const updatedExpense = await expenseService.updateExpense(editingExpense.id, {
+      const success = await updateExpense(editingExpense.id, {
         name: expenseData.name,
         amount: expenseData.amount,
         due_date: expenseData.due_date,
@@ -65,15 +49,14 @@ export default function Expenses() {
         recurring_pattern: expenseData.recurring_pattern,
         notes: expenseData.notes
       });
-      if (updatedExpense) {
-        setExpenses(prev => prev.map(exp => exp.id === editingExpense.id ? updatedExpense : exp));
+      if (success) {
         setShowModal(false);
         setEditingExpense(null);
       } else {
         throw new Error('Failed to update expense.');
       }
     } else {
-      const newExpense = await expenseService.addExpense({
+      const success = await addExpense({
         name: expenseData.name,
         amount: expenseData.amount,
         due_date: expenseData.due_date,
@@ -83,8 +66,7 @@ export default function Expenses() {
         recurring_pattern: expenseData.recurring_pattern,
         notes: expenseData.notes
       });
-      if (newExpense) {
-        setExpenses(prev => [...prev, newExpense]);
+      if (success) {
         setShowModal(false);
       } else {
         throw new Error('Failed to add expense.');
@@ -116,9 +98,9 @@ export default function Expenses() {
     if (!deletingExpense) return;
     
     setDeleting(deletingExpense.id);
-    const success = await expenseService.deleteExpense(deletingExpense.id);
+    const success = await deleteExpense(deletingExpense.id);
     if (success) {
-      setExpenses(prev => prev.filter(exp => exp.id !== deletingExpense.id));
+      // Success is handled by the context
     }
     setDeleting(null);
     setDeletingExpense(null);
@@ -139,15 +121,13 @@ export default function Expenses() {
   const avatarId = profile ? (profile.avatar_id || 'cat') : '';
 
   // Filtered expenses
-  const filteredExpenses = expenses.filter(exp => {
-    const matchesSearch =
-      exp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (exp.notes && exp.notes.toLowerCase().includes(searchTerm.toLowerCase()));
+  const searchResults = searchExpenses(searchTerm);
+  const filteredExpenses = searchResults.filter(exp => {
     const matchesCategory = categoryFilter ? exp.category === categoryFilter : true;
     const matchesType = typeFilter
       ? (typeFilter === 'recurring' ? exp.is_recurring : !exp.is_recurring)
       : true;
-    return matchesSearch && matchesCategory && matchesType;
+    return matchesCategory && matchesType;
   });
 
   return (
