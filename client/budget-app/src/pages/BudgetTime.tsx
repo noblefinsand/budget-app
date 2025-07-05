@@ -316,6 +316,29 @@ export default function BudgetTime() {
             )}
           </div>
 
+          {/* Calculation Summary - Mobile First, Desktop Sidebar */}
+          <div className="lg:hidden">
+            <div className="bg-blue-900 rounded-xl shadow-lg p-6 flex flex-col items-center gap-4">
+              {/* Amount Left Widget */}
+              <div className="text-3xl font-bold text-white">
+                {formatCurrency(remainingBudget, profile?.currency || 'USD')}
+              </div>
+              <div className="text-sm text-gray-200">Amount Left</div>
+              {/* Progress Bar */}
+              <div className="w-full bg-gray-700 rounded-full h-3">
+                <div
+                  className="bg-green-500 h-3 rounded-full"
+                  style={{ width: `${Math.min(100, (totalIncluded / paycheckNum) * 100)}%` }}
+                />
+              </div>
+              {/* Totals */}
+              <div className="flex justify-between w-full text-sm mt-2">
+                <span className="text-green-400">Included: {formatCurrency(totalIncluded, profile?.currency || 'USD')}</span>
+                <span className="text-gray-300">Excluded: {formatCurrency(totalExcluded, profile?.currency || 'USD')}</span>
+              </div>
+            </div>
+          </div>
+
           {/* Expenses List */}
           <div className="bg-gray-800 rounded-xl shadow p-6 flex flex-col gap-2">
             <h2 className="text-xl text-white font-semibold mb-2">Expenses This Period</h2>
@@ -436,8 +459,8 @@ export default function BudgetTime() {
           </div>
         </div>
 
-        {/* Sidebar (Summary Widget) */}
-        <aside className="w-full lg:w-[350px] flex-shrink-0">
+        {/* Sidebar (Summary Widget) - Desktop Only */}
+        <aside className="hidden lg:block w-[350px] flex-shrink-0">
           <div className="sticky top-8">
             <div className="bg-blue-900 rounded-xl shadow-lg p-6 flex flex-col items-center gap-4">
               {/* Amount Left Widget */}
