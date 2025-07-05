@@ -3,6 +3,8 @@ import type { Expense, ExpenseCategory, RecurringFrequency } from '../types/expe
 import CategorySelect from './CategorySelect';
 import RecurringDateSelector from './RecurringDateSelector';
 import { parseCurrencyInput } from '../utils/currencyFormat';
+import { useFocusTrap } from '../hooks/useFocusTrap';
+import LiveRegion from './LiveRegion';
 
 interface ExpenseModalProps {
   isOpen: boolean;
@@ -45,6 +47,13 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense, mode, c
   const [recurringDateValue, setRecurringDateValue] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [liveMessage, setLiveMessage] = useState('');
+
+  // Focus trap for modal
+  const modalRef = useFocusTrap({
+    isActive: isOpen,
+    onEscape: onClose
+  });
 
   // Reset form when modal opens/closes or expense changes
   useEffect(() => {
@@ -112,24 +121,33 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense, mode, c
 
   const handleSave = async () => {
     setFormError(null);
+    setLiveMessage('');
     if (!form.name.trim() || !form.amount || !form.category) {
-      setFormError('Please fill in all required fields.');
+      const errorMsg = 'Please fill in all required fields.';
+      setFormError(errorMsg);
+      setLiveMessage(errorMsg);
       return;
     }
     
     // Validate date fields based on whether it's recurring or not
     if (form.is_recurring) {
       if (!form.recurring_frequency) {
-        setFormError('Please select a recurring frequency.');
+        const errorMsg = 'Please select a recurring frequency.';
+        setFormError(errorMsg);
+        setLiveMessage(errorMsg);
         return;
       }
       if (!recurringDateValue) {
-        setFormError('Please select a date for the recurring expense.');
+        const errorMsg = 'Please select a date for the recurring expense.';
+        setFormError(errorMsg);
+        setLiveMessage(errorMsg);
         return;
       }
     } else {
       if (!form.due_date) {
-        setFormError('Please select a due date.');
+        const errorMsg = 'Please select a due date.';
+        setFormError(errorMsg);
+        setLiveMessage(errorMsg);
         return;
       }
     }
@@ -139,7 +157,9 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense, mode, c
     // Parse the amount using international number format
     const parsedAmount = parseCurrencyInput(form.amount, currency);
     if (isNaN(parsedAmount)) {
-      setFormError('Please enter a valid amount.');
+      const errorMsg = 'Please enter a valid amount.';
+      setFormError(errorMsg);
+      setLiveMessage(errorMsg);
       setSaving(false);
       return;
     }
@@ -178,9 +198,13 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense, mode, c
 
     try {
       await onSave(expenseData);
+      const successMsg = mode === 'add' ? 'Expense added successfully' : 'Expense updated successfully';
+      setLiveMessage(successMsg);
       onClose();
     } catch {
-      setFormError('Failed to save expense.');
+      const errorMsg = 'Failed to save expense.';
+      setFormError(errorMsg);
+      setLiveMessage(errorMsg);
     } finally {
       setSaving(false);
     }
@@ -189,11 +213,16 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense, mode, c
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 rounded-xl shadow-lg w-full md:w-1/2 md:max-w-2xl max-h-[90vh] overflow-y-auto relative">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="expense-modal-title"
+    >
+      <div ref={modalRef} className="bg-gray-800 rounded-xl shadow-lg w-full md:w-1/2 md:max-w-2xl max-h-[90vh] overflow-y-auto relative">
         {/* Header */}
         <div className="sticky top-0 bg-gray-800 rounded-t-xl px-6 py-4 border-b border-gray-700">
-          <h2 className="text-xl md:text-2xl font-bold text-white">
+          <h2 id="expense-modal-title" className="text-xl md:text-2xl font-bold text-white">
             {mode === 'add' ? 'Add Expense' : 'Edit Expense'}
           </h2>
         </div>
@@ -203,25 +232,29 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense, mode, c
         
         <div className="space-y-4">
           <div>
-            <label className="block text-gray-300 mb-1">Name *</label>
+            <label htmlFor="expense-name" className="block text-gray-300 mb-1">Name *</label>
             <input
+              id="expense-name"
               type="text"
               name="name"
               value={form.name}
               onChange={handleFormChange}
               className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-required="true"
             />
           </div>
 
           <div>
-            <label className="block text-gray-300 mb-1">Amount *</label>
+            <label htmlFor="expense-amount" className="block text-gray-300 mb-1">Amount *</label>
             <input
+              id="expense-amount"
               type="text"
               name="amount"
               value={form.amount}
               onChange={handleFormChange}
               className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter amount"
+              aria-required="true"
             />
           </div>
 
@@ -235,23 +268,26 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense, mode, c
 
           <div className="flex items-center gap-2">
             <input
+              id="expense-recurring"
               type="checkbox"
               name="is_recurring"
               checked={form.is_recurring}
               onChange={handleFormChange}
               className="form-checkbox h-4 w-4 text-blue-600"
             />
-            <label className="text-gray-300">Recurring</label>
+            <label htmlFor="expense-recurring" className="text-gray-300">Recurring</label>
           </div>
 
           {form.is_recurring && (
             <div>
-              <label className="block text-gray-300 mb-1">Frequency *</label>
+              <label htmlFor="expense-frequency" className="block text-gray-300 mb-1">Frequency *</label>
               <select
+                id="expense-frequency"
                 name="recurring_frequency"
                 value={form.recurring_frequency || ''}
                 onChange={handleFormChange}
                 className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-required="true"
               >
                 <option value="">Select frequency</option>
                 {FREQUENCIES.map(freq => (
@@ -270,20 +306,23 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense, mode, c
             />
           ) : (
             <div>
-              <label className="block text-gray-300 mb-1">Due Date *</label>
+              <label htmlFor="expense-due-date" className="block text-gray-300 mb-1">Due Date *</label>
               <input
+                id="expense-due-date"
                 type="date"
                 name="due_date"
                 value={form.due_date}
                 onChange={handleFormChange}
                 className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-required="true"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-gray-300 mb-1">Notes</label>
+            <label htmlFor="expense-notes" className="block text-gray-300 mb-1">Notes</label>
             <input
+              id="expense-notes"
               type="text"
               name="notes"
               value={form.notes}
@@ -295,6 +334,9 @@ export default function ExpenseModal({ isOpen, onClose, onSave, expense, mode, c
           {formError && <div className="text-red-400 text-sm">{formError}</div>}
         </div>
         </div>
+
+        {/* Live region for screen readers */}
+        <LiveRegion message={liveMessage} type="assertive" />
 
         {/* Footer */}
         <div className="sticky bottom-0 bg-gray-800 rounded-b-xl px-6 py-4 border-t border-gray-700">

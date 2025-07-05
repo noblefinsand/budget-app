@@ -2,6 +2,7 @@ import React from 'react';
 import type { Expense } from '../types/expense';
 import { formatDueDateForDisplay } from '../../utils/dateFormat';
 import { formatCurrency } from '../utils/currencyFormat';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface DeleteConfirmationModalProps {
   expense: Expense | null;
@@ -20,13 +21,24 @@ export default function DeleteConfirmationModal({
   isDeleting,
   currency = 'USD'
 }: DeleteConfirmationModalProps) {
+  // Focus trap for modal
+  const modalRef = useFocusTrap({
+    isActive: isOpen,
+    onEscape: onClose
+  });
+
   if (!isOpen || !expense) return null;
 
 
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 rounded-xl shadow-lg w-full max-w-md md:w-1/2 md:max-w-2xl max-h-[90vh] overflow-y-auto relative">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-modal-title"
+    >
+      <div ref={modalRef} className="bg-gray-800 rounded-xl shadow-lg w-full max-w-md md:w-1/2 md:max-w-2xl max-h-[90vh] overflow-y-auto relative">
         {/* Header */}
         <div className="sticky top-0 bg-gray-800 rounded-t-xl px-6 py-4 border-b border-gray-700 flex items-center gap-3">
           <div className="flex-shrink-0">
@@ -36,7 +48,7 @@ export default function DeleteConfirmationModal({
               </svg>
             </div>
           </div>
-          <h3 className="text-lg md:text-xl font-bold text-white">Delete Expense</h3>
+          <h3 id="delete-modal-title" className="text-lg md:text-xl font-bold text-white">Delete Expense</h3>
         </div>
         {/* Content */}
         <div className="px-6 py-4">

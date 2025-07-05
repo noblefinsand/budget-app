@@ -24,12 +24,22 @@ export default function CategorySelect({ value, onChange, label, className = '' 
       }
     };
 
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!isOpen) return;
+
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen]);
 
@@ -38,12 +48,15 @@ export default function CategorySelect({ value, onChange, label, className = '' 
   return (
     <div className={`relative ${className}`} ref={selectRef}>
       {label && (
-        <label className="block text-gray-300 mb-1">{label}</label>
+        <label id={`${label.toLowerCase().replace(/\s+/g, '-')}-label`} className="block text-gray-300 mb-1">{label}</label>
       )}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-between"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-labelledby={label ? `${label.toLowerCase().replace(/\s+/g, '-')}-label` : undefined}
       >
         <div className="flex items-center gap-2">
           <div 
@@ -63,7 +76,11 @@ export default function CategorySelect({ value, onChange, label, className = '' 
       </button>
       
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+        <div 
+          className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto"
+          role="listbox"
+          aria-label="Category options"
+        >
           {CATEGORIES.map((category) => (
             <button
               key={category}
@@ -75,6 +92,8 @@ export default function CategorySelect({ value, onChange, label, className = '' 
               className={`w-full px-3 py-2 text-left hover:bg-gray-700 flex items-center gap-2 ${
                 category === value ? 'bg-gray-700' : ''
               }`}
+              role="option"
+              aria-selected={category === value}
             >
               <div 
                 className="w-4 h-4 rounded-full border border-gray-600"
