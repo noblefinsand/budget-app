@@ -158,44 +158,71 @@ export default function Expenses() {
         </div>
 
         {/* Search and Filter Controls */}
-        <div className="flex flex-col sm:flex-row gap-2 mb-4">
-          <input
-            type="text"
-            placeholder="Search expenses..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className="flex-1 px-4 py-2 rounded bg-gray-700 border border-gray-600 text-white"
-          />
-          <select
-            value={categoryFilter}
-            onChange={e => setCategoryFilter(e.target.value)}
-            className="px-4 py-2 rounded bg-gray-700 border border-gray-600 text-white"
-          >
-            <option value="">All Categories</option>
-            {CATEGORIES.map((cat: ExpenseCategory) => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
-          <select
-            value={typeFilter}
-            onChange={e => setTypeFilter(e.target.value)}
-            className="px-4 py-2 rounded bg-gray-700 border border-gray-600 text-white"
-          >
-            <option value="">All Types</option>
-            <option value="recurring">Recurring</option>
-            <option value="one-time">One-Time</option>
-          </select>
-        </div>
+        {expenses.length > 0 && (
+          <div className="flex flex-col sm:flex-row gap-2 mb-4">
+            <input
+              type="text"
+              placeholder="Search expenses..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="flex-1 px-4 py-2 rounded bg-gray-700 border border-gray-600 text-white"
+            />
+            <select
+              value={categoryFilter}
+              onChange={e => setCategoryFilter(e.target.value)}
+              className="px-4 py-2 rounded bg-gray-700 border border-gray-600 text-white"
+            >
+              <option value="">All Categories</option>
+              {CATEGORIES.map((cat: ExpenseCategory) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+            <select
+              value={typeFilter}
+              onChange={e => setTypeFilter(e.target.value)}
+              className="px-4 py-2 rounded bg-gray-700 border border-gray-600 text-white"
+            >
+              <option value="">All Types</option>
+              <option value="recurring">Recurring</option>
+              <option value="one-time">One-Time</option>
+            </select>
+          </div>
+        )}
 
         {/* Expenses List (filtered) */}
         {filteredExpenses.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-            <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <div className="text-lg font-semibold mb-1">No expenses found</div>
-            <div className="text-sm">Try adjusting your search or filters.</div>
+            {expenses.length === 0 ? (
+              // No expenses at all - show "Add your first expense"
+              <>
+                <svg className="w-16 h-16 mb-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                <div className="text-xl font-semibold mb-2 text-white">Add your first expense</div>
+                <div className="text-sm mb-6 text-center max-w-md">
+                  Start tracking your expenses to better manage your budget and stay on top of your finances.
+                </div>
+                <button
+                  onClick={handleAddExpense}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2 shadow-lg"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Add Your First Expense
+                </button>
+              </>
+            ) : (
+              // Has expenses but none match current filters - show "No expenses found"
+              <>
+                <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <div className="text-lg font-semibold mb-1">No expenses found</div>
+                <div className="text-sm">Try adjusting your search or filters.</div>
+              </>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

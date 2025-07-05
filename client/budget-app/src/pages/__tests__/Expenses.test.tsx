@@ -125,7 +125,7 @@ describe('Expenses', () => {
   it('shows empty state when no expenses', () => {
     Object.assign(mockExpensesContext, { expenses: [], searchExpenses: vi.fn(() => []) });
     render(<Expenses />);
-    expect(screen.getByText('No expenses found')).toBeInTheDocument();
+    expect(screen.getByText('Add your first expense')).toBeInTheDocument();
   });
 
   it('filters by category', () => {
