@@ -1,8 +1,7 @@
 import { useAuth } from '../context/AuthContext';
+import { useProfile } from '../context/ProfileContext';
+import { useExpenses } from '../context/ExpensesContext';
 import { useState, useEffect } from 'react';
-import { profileService } from '../services/profileService';
-import { expenseService } from '../services/expenseService';
-import type { Profile } from '../types/profile';
 import type { Expense, ExpenseCategory, RecurringFrequency } from '../types/expense';
 import WelcomeModal from '../components/WelcomeModal';
 import ExpenseCalendar from '../components/ExpenseCalendar';
@@ -14,10 +13,9 @@ import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
+  const { profile, loading: profileLoading } = useProfile();
+  const { expenses, loading: expensesLoading } = useExpenses();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -28,46 +26,14 @@ export default function Dashboard() {
 
   const displayName = profile ? (profile.display_name || user?.email || '') : '';
   const avatarId = profile ? (profile.avatar_id || 'cat') : '';
+  const loading = profileLoading || expensesLoading;
 
   useEffect(() => {
-    loadProfile();
-    loadExpenses();
-  }, []);
-
-  const loadExpenses = async () => {
-    try {
-      setLoading(true);
-      const expensesData = await expenseService.getExpenses();
-      setExpenses(expensesData);
-    } catch (error) {
-      console.error('Error loading expenses:', error);
-    } finally {
-      setLoading(false);
+    // Check if user is new (hasn't completed welcome setup)
+    if (profile && !profile.has_completed_welcome) {
+      setShowWelcomeModal(true);
     }
-  };
-
-  const loadProfile = async () => {
-    try {
-      const profileData = await profileService.getProfile();
-      if (profileData) {
-        setProfile(profileData);
-        
-        // Check if user is new (hasn't completed welcome setup)
-        const isNewUser = !profileData.has_completed_welcome;
-        
-        if (isNewUser) {
-          setShowWelcomeModal(true);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading profile:', error);
-    }
-  };
-
-  const refreshData = async () => {
-    await loadExpenses();
-    await loadProfile();
-  };
+  }, [profile]);
 
   const handleWelcomeComplete = () => {
     setShowWelcomeModal(false);
@@ -92,13 +58,15 @@ export default function Dashboard() {
     setShowDeleteModal(true);
   };
 
+  const { deleteExpense, updateExpense } = useExpenses();
+
   const confirmDelete = async () => {
     if (!deletingExpense) return;
     
     setDeleting(deletingExpense.id);
-    const success = await expenseService.deleteExpense(deletingExpense.id);
+    const success = await deleteExpense(deletingExpense.id);
     if (success) {
-      setExpenses(prev => prev.filter(exp => exp.id !== deletingExpense.id));
+      // Success is handled by the context
     }
     setDeleting(null);
     setDeletingExpense(null);
@@ -121,7 +89,7 @@ export default function Dashboard() {
     notes: string;
   }) => {
     if (editingExpense) {
-      const updatedExpense = await expenseService.updateExpense(editingExpense.id, {
+      const success = await updateExpense(editingExpense.id, {
         name: expenseData.name,
         amount: expenseData.amount,
         due_date: expenseData.due_date,
@@ -131,8 +99,7 @@ export default function Dashboard() {
         recurring_pattern: expenseData.recurring_pattern,
         notes: expenseData.notes
       });
-      if (updatedExpense) {
-        setExpenses(prev => prev.map(exp => exp.id === editingExpense.id ? updatedExpense : exp));
+      if (success) {
         setShowEditModal(false);
         setEditingExpense(null);
       } else {
@@ -148,7 +115,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-900">
-      <Header displayName={displayName} avatarId={avatarId} onLogout={logout} onRefresh={refreshData} />
+      <Header displayName={displayName} avatarId={avatarId} onLogout={logout} onRefresh={() => {}} />
       
       <main id="main-content" className="w-full py-6 px-4 sm:px-6 lg:px-8">
         <div className="py-6">
