@@ -181,7 +181,6 @@ function generateMonthlyDates(
   dates: Date[]
 ): void {
   const targetDay = pattern.dayOfMonth || startDate.getDate();
-  // eslint-disable-next-line prefer-const
   const currentDate = pattern.dayOfMonth
     ? new Date(startDate.getFullYear(), startDate.getMonth(), targetDay)
     : new Date(startDate);
@@ -204,7 +203,6 @@ function generateYearlyDates(
   endDate: Date,
   dates: Date[]
 ): void {
-  // eslint-disable-next-line prefer-const
   const currentDate = (pattern.month && pattern.day)
     ? new Date(startDate.getFullYear(), pattern.month - 1, pattern.day)
     : new Date(startDate);

@@ -6,7 +6,7 @@ import { CATEGORY_COLORS } from '../types/expense';
 import { profileService } from '../services/profileService';
 import { generateRecurringDates } from '../utils/dateFormat';
 import { formatCurrency } from '../utils/currencyFormat';
-import React from 'react';
+
 
 // Import calendar styles
 import 'react-big-calendar/lib/css/react-big-calendar.css';
