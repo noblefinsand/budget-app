@@ -15,11 +15,15 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black p-4" aria-live="polite" aria-busy="true">
         <div className="text-center">
           <h1 className="text-5xl font-bold text-white mb-3">Budget Buddy</h1>
           <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <div 
+              className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"
+              role="status"
+              aria-label="Loading application"
+            ></div>
           </div>
         </div>
       </div>
@@ -39,11 +43,15 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black p-4" aria-live="polite" aria-busy="true">
         <div className="text-center">
           <h1 className="text-5xl font-bold text-white mb-3">Budget Buddy</h1>
           <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <div 
+              className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"
+              role="status"
+              aria-label="Loading application"
+            ></div>
           </div>
         </div>
       </div>

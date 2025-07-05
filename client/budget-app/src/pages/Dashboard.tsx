@@ -150,12 +150,16 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-900">
       <Header displayName={displayName} avatarId={avatarId} onLogout={logout} onRefresh={refreshData} />
       
-      <main className="w-full py-6 px-4 sm:px-6 lg:px-8">
+      <main id="main-content" className="w-full py-6 px-4 sm:px-6 lg:px-8">
         <div className="py-6">
           {loading ? (
-            <div className="flex items-center justify-center h-96 bg-gray-800 rounded-xl">
+            <div className="flex items-center justify-center h-96 bg-gray-800 rounded-xl" aria-live="polite" aria-busy="true">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                <div 
+                  className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"
+                  role="status"
+                  aria-label="Loading expenses"
+                ></div>
                 <p className="text-gray-400">Loading expenses...</p>
               </div>
             </div>

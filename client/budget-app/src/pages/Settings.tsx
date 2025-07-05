@@ -3,6 +3,7 @@ import { profileService } from '../services/profileService';
 import type { ProfileUpdate } from '../types/profile';
 import AvatarSelector from '../components/AvatarSelector';
 import Header from '../components/Header';
+import LiveRegion from '../components/LiveRegion';
 
 export default function Settings() {
   const [loading, setLoading] = useState(true);
@@ -20,6 +21,7 @@ export default function Settings() {
 
   const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [liveMessage, setLiveMessage] = useState('');
 
   useEffect(() => {
     loadProfile();
@@ -90,17 +92,24 @@ export default function Settings() {
     e.preventDefault();
     setSaving(true);
     setMessage(null);
+    setLiveMessage('');
 
     try {
       const updatedProfile = await profileService.updateProfile(formData);
       if (updatedProfile) {
-        setMessage({ type: 'success', text: 'Settings saved successfully!' });
+        const successMsg = 'Settings saved successfully!';
+        setMessage({ type: 'success', text: successMsg });
+        setLiveMessage(successMsg);
       } else {
-        setMessage({ type: 'error', text: 'Failed to save settings' });
+        const errorMsg = 'Failed to save settings';
+        setMessage({ type: 'error', text: errorMsg });
+        setLiveMessage(errorMsg);
       }
     } catch (error) {
       console.error('Error saving profile:', error);
-      setMessage({ type: 'error', text: 'Failed to save settings' });
+      const errorMsg = 'Failed to save settings';
+      setMessage({ type: 'error', text: errorMsg });
+      setLiveMessage(errorMsg);
     } finally {
       setSaving(false);
     }
@@ -111,8 +120,15 @@ export default function Settings() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center" aria-live="polite" aria-busy="true">
+        <div className="text-white">
+          <div 
+            className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"
+            role="status"
+            aria-label="Loading settings"
+          ></div>
+          Loading...
+        </div>
       </div>
     );
   }
@@ -273,6 +289,9 @@ export default function Settings() {
           </form>
         </div>
       </main>
+      
+      {/* Live region for screen readers */}
+      <LiveRegion message={liveMessage} type="polite" />
     </div>
   );
 } 

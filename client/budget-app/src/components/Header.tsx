@@ -21,7 +21,15 @@ export default function Header({ displayName, avatarId, onLogout, onRefresh }: H
   };
 
   return (
-    <nav className="bg-gray-800 shadow-lg border-b border-gray-700 relative z-50">
+    <>
+      {/* Skip link for keyboard users */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-blue-600 text-white px-4 py-2 rounded-lg z-50"
+      >
+        Skip to main content
+      </a>
+      <nav className="bg-gray-800 shadow-lg border-b border-gray-700 relative z-50">
       {/* Mobile menu overlay */}
       {mobileMenuOpen && (
         <div
@@ -31,10 +39,13 @@ export default function Header({ displayName, avatarId, onLogout, onRefresh }: H
       )}
       {/* Mobile slide-out menu */}
       <div
+        id="mobile-menu"
         className={`fixed top-0 left-0 h-full z-50 bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out
           ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
           w-2/3 max-w-xs md:hidden flex flex-col`}
         style={{ minWidth: 220 }}
+        role="navigation"
+        aria-label="Mobile navigation"
       >
         <div className="flex flex-col items-center p-4 border-b border-gray-700">
           <Avatar avatarId={avatarId} size="md" />
@@ -121,13 +132,17 @@ export default function Header({ displayName, avatarId, onLogout, onRefresh }: H
           <button
             onClick={() => setMobileMenuOpen(true)}
             className="md:hidden p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white ml-auto"
+            aria-label="Open navigation menu"
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-menu"
           >
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
         </div>
       </div>
     </nav>
+    </>
   );
 } 

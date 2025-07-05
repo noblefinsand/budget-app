@@ -5,6 +5,7 @@ import { profileService } from '../services/profileService';
 import type { Profile } from '../types/profile';
 import { getCurrentBudgetPeriod, generateRecurringDates, formatDueDateForDisplay, formatSpecificDateForDisplay } from '../utils/dateFormat';
 import { formatCurrency, parseCurrencyInput } from '../utils/currencyFormat';
+import LiveRegion from '../components/LiveRegion';
 import { expenseService } from '../services/expenseService';
 import type { Expense } from '../types/expense';
 
@@ -29,6 +30,7 @@ export default function BudgetTime() {
   const [useManualPeriod, setUseManualPeriod] = useState(false);
   const [manualPeriodStart, setManualPeriodStart] = useState('');
   const [manualPeriodEnd, setManualPeriodEnd] = useState('');
+  const [liveMessage, setLiveMessage] = useState('');
 
 
 
@@ -52,8 +54,15 @@ export default function BudgetTime() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center" aria-live="polite" aria-busy="true">
+        <div className="text-white">
+          <div 
+            className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"
+            role="status"
+            aria-label="Loading budget time"
+          ></div>
+          Loading...
+        </div>
       </div>
     );
   }
@@ -140,15 +149,24 @@ export default function BudgetTime() {
 
   // Handler for toggling exclude/include
   function handleToggleExclude(expenseId: string) {
+    const expense = allPeriodExpenses.find(exp => exp.id === expenseId);
+    const isCurrentlyExcluded = excludedExpenseIds.includes(expenseId);
+    
     setExcludedExpenseIds(prev =>
       prev.includes(expenseId)
         ? prev.filter(id => id !== expenseId)
         : [...prev, expenseId]
     );
+    
+    if (expense) {
+      const action = isCurrentlyExcluded ? 'included' : 'excluded';
+      setLiveMessage(`Expense "${expense.name}" ${action} from budget calculations`);
+    }
   }
 
   function handleAddOneTimeExpense(e: React.FormEvent) {
     e.preventDefault();
+    setLiveMessage('');
     let valid = true;
     if (!oneTimeName.trim()) {
       setOneTimeTouched(t => ({ ...t, name: true }));
@@ -164,6 +182,7 @@ export default function BudgetTime() {
     const parsedAmount = parseCurrencyInput(oneTimeAmount, profile?.currency || 'USD');
     if (isNaN(parsedAmount)) {
       setOneTimeTouched(t => ({ ...t, amount: true }));
+      setLiveMessage('Please enter a valid amount for the one-time expense');
       return;
     }
     
@@ -186,10 +205,15 @@ export default function BudgetTime() {
     setOneTimeName('');
     setOneTimeAmount('');
     setOneTimeTouched({ name: false, amount: false });
+    setLiveMessage(`One-time expense "${oneTimeName}" added for ${formatCurrency(parsedAmount, profile?.currency || 'USD')}`);
   }
 
   function handleRemoveOneTimeExpense(id: string) {
+    const expense = oneTimeExpenses.find(exp => exp.id === id);
     setOneTimeExpenses(prev => prev.filter(exp => exp.id !== id));
+    if (expense) {
+      setLiveMessage(`One-time expense "${expense.name}" removed`);
+    }
   }
 
   // Calculate totals for included and excluded expenses
@@ -204,7 +228,7 @@ export default function BudgetTime() {
   return (
     <div className="min-h-screen bg-gray-900">
       <Header displayName={displayName} avatarId={avatarId} onLogout={logout} />
-      <div className="flex flex-col lg:flex-row gap-8 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main id="main-content" className="flex flex-col lg:flex-row gap-8 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Main Content */}
         <div className="flex-1 flex flex-col gap-6">
           {/* Paycheck Input */}
@@ -218,11 +242,14 @@ export default function BudgetTime() {
               onChange={e => setPaycheckAmount(e.target.value)}
               className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 mb-2"
               placeholder="Enter your paycheck amount"
+              aria-describedby="paycheck-amount-help"
             />
+            <p id="paycheck-amount-help" className="text-gray-400 text-sm">Enter the amount you expect to receive in your paycheck</p>
             <div className="mt-2">
               <div className="flex items-center gap-3 mb-3">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
+                    id="manual-period-checkbox"
                     type="checkbox"
                     checked={useManualPeriod}
                     onChange={e => setUseManualPeriod(e.target.checked)}
@@ -235,8 +262,9 @@ export default function BudgetTime() {
               {useManualPeriod && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gray-700/30 rounded-lg">
                   <div>
-                    <label className="block text-gray-300 text-sm font-medium mb-1">Period Start</label>
+                    <label htmlFor="period-start" className="block text-gray-300 text-sm font-medium mb-1">Period Start</label>
                     <input
+                      id="period-start"
                       type="date"
                       value={manualPeriodStart}
                       onChange={e => setManualPeriodStart(e.target.value)}
@@ -244,8 +272,9 @@ export default function BudgetTime() {
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-300 text-sm font-medium mb-1">Period End</label>
+                    <label htmlFor="period-end" className="block text-gray-300 text-sm font-medium mb-1">Period End</label>
                     <input
+                      id="period-end"
                       type="date"
                       value={manualPeriodEnd}
                       onChange={e => setManualPeriodEnd(e.target.value)}
@@ -301,7 +330,7 @@ export default function BudgetTime() {
                   >
                     <span className="text-gray-200 text-base flex items-center gap-3">
                       {exp.name}
-                      <span className="ml-1 text-xs text-gray-400">
+                      <span className="ml-1 text-xs text-gray-300">
                         {(exp as ExpandedExpense)._occurrenceDate 
                           ? formatSpecificDateForDisplay((exp as ExpandedExpense)._occurrenceDate!)
                           : formatDueDateForDisplay(exp)
@@ -314,7 +343,7 @@ export default function BudgetTime() {
                         <span className="ml-2 text-xs text-yellow-400 bg-yellow-900/30 px-2 py-0.5 rounded-full">One-Time</span>
                       )}
                       {excluded && (
-                        <span className="ml-2 text-xs text-gray-400 bg-gray-700/50 px-2 py-0.5 rounded-full">Excluded</span>
+                        <span className="ml-2 text-xs text-gray-300 bg-gray-700/50 px-2 py-0.5 rounded-full">Excluded</span>
                       )}
                     </span>
                     <div className="flex items-center gap-2">
@@ -368,9 +397,12 @@ export default function BudgetTime() {
                     value={oneTimeName}
                     onChange={e => setOneTimeName(e.target.value)}
                     className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    aria-required="true"
+                    aria-invalid={oneTimeTouched.name && !oneTimeName}
+                    aria-describedby={oneTimeTouched.name && !oneTimeName ? "one-time-name-error" : undefined}
                   />
                   {oneTimeTouched.name && !oneTimeName && (
-                    <span className="text-xs text-red-400 mt-1">Name is required</span>
+                    <span id="one-time-name-error" className="text-xs text-red-400 mt-1">Name is required</span>
                   )}
                 </div>
                 <div className="flex-1 flex flex-col">
@@ -383,9 +415,12 @@ export default function BudgetTime() {
                     value={oneTimeAmount}
                     onChange={e => setOneTimeAmount(e.target.value)}
                     className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    aria-required="true"
+                    aria-invalid={oneTimeTouched.amount && !oneTimeAmount}
+                    aria-describedby={oneTimeTouched.amount && !oneTimeAmount ? "one-time-amount-error" : undefined}
                   />
                   {oneTimeTouched.amount && !oneTimeAmount && (
-                    <span className="text-xs text-red-400 mt-1">Amount is required</span>
+                    <span id="one-time-amount-error" className="text-xs text-red-400 mt-1">Amount is required</span>
                   )}
                 </div>
                 <div className="flex items-end">
@@ -409,7 +444,7 @@ export default function BudgetTime() {
               <div className="text-3xl font-bold text-white">
                 {formatCurrency(remainingBudget, profile?.currency || 'USD')}
               </div>
-              <div className="text-sm text-gray-300">Amount Left</div>
+              <div className="text-sm text-gray-200">Amount Left</div>
               {/* Progress Bar */}
               <div className="w-full bg-gray-700 rounded-full h-3">
                 <div
@@ -420,12 +455,15 @@ export default function BudgetTime() {
               {/* Totals */}
               <div className="flex justify-between w-full text-sm mt-2">
                 <span className="text-green-400">Included: {formatCurrency(totalIncluded, profile?.currency || 'USD')}</span>
-                <span className="text-gray-400">Excluded: {formatCurrency(totalExcluded, profile?.currency || 'USD')}</span>
+                <span className="text-gray-300">Excluded: {formatCurrency(totalExcluded, profile?.currency || 'USD')}</span>
               </div>
             </div>
           </div>
         </aside>
-      </div>
+      </main>
+      
+      {/* Live region for screen readers */}
+      <LiveRegion message={liveMessage} type="polite" />
     </div>
   );
 } 
