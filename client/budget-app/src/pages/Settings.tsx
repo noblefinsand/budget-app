@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useProfile } from '../context/ProfileContext';
+import { useAuth } from '../context/AuthContext';
 import type { ProfileUpdate } from '../types/profile';
 import AvatarSelector from '../components/AvatarSelector';
 import Header from '../components/Header';
@@ -7,6 +8,7 @@ import LiveRegion from '../components/LiveRegion';
 
 export default function Settings() {
   const { profile, loading, error, updateProfile } = useProfile();
+  const { logout } = useAuth();
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -131,7 +133,7 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen bg-gray-900">
-      <Header displayName={displayName} avatarId={avatarId} onLogout={() => { /* TODO: implement logout */ }} />
+      <Header displayName={displayName} avatarId={avatarId} onLogout={logout} />
 
       <main className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
