@@ -8,4 +8,7 @@ export * from './profileMocks';
 export * from './formData';
 
 // Router mocks
-export * from './routerMocks'; 
+export * from './routerMocks';
+
+// Expense mocks
+export * from './expenseMocks'; 
