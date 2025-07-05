@@ -19,7 +19,7 @@ export default function Expenses() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
@@ -132,7 +132,7 @@ export default function Expenses() {
 
   return (
     <div className="min-h-screen bg-gray-900">
-      <Header displayName={displayName} avatarId={avatarId} onLogout={() => { /* TODO: implement logout */ }} />
+      <Header displayName={displayName} avatarId={avatarId} onLogout={logout} />
       <main id="main-content" className="max-w-7xl mx-auto p-6">
         {/* Header with Add Button */}
         <div className="mb-8">
