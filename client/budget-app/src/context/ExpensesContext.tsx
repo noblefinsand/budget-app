@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { expenseService } from '../services/expenseService';
 import type { Expense, ExpenseCreate, ExpenseUpdate, ExpenseCategory } from '../types/expense';
+import { useAuth } from './AuthContext';
 
 interface ExpensesContextType {
   expenses: Expense[];
@@ -25,8 +26,9 @@ interface ExpensesProviderProps {
 }
 
 export const ExpensesProvider = ({ children }: ExpensesProviderProps) => {
+  const { user } = useAuth();
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadExpenses = async () => {
@@ -129,8 +131,15 @@ export const ExpensesProvider = ({ children }: ExpensesProviderProps) => {
   };
 
   useEffect(() => {
-    loadExpenses();
-  }, []);
+    if (user) {
+      loadExpenses();
+    } else {
+      // Clear expenses when user logs out
+      setExpenses([]);
+      setError(null);
+      setLoading(false);
+    }
+  }, [user]);
 
   const value: ExpensesContextType = {
     expenses,
