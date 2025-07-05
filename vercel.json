@@ -1,0 +1,6 @@
+{
+  "buildCommand": "cd client/budget-app && npm run build",
+  "outputDirectory": "client/budget-app/dist",
+  "installCommand": "cd client/budget-app && npm install",
+  "framework": "vite"
+} 
