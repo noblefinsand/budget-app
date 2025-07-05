@@ -164,7 +164,7 @@ describe('BudgetTime Page', () => {
     expect(screen.getByLabelText('Paycheck Amount')).toBeInTheDocument();
     expect(screen.getByText('Expenses This Period')).toBeInTheDocument();
     expect(screen.getByText('Add One-Time Expense')).toBeInTheDocument();
-    expect(screen.getByText('Amount Left')).toBeInTheDocument();
+    expect(screen.getAllByText('Amount Left')).toHaveLength(2); // Mobile + Desktop summaries
   });
 
   it('displays current period information', async () => {
@@ -213,7 +213,7 @@ describe('BudgetTime Page', () => {
     });
 
     expect(screen.getByText('Groceries')).toBeInTheDocument();
-    expect(screen.getAllByText(/300\.00/)).toHaveLength(3); // Multiple instances expected
+    expect(screen.getAllByText(/300\.00/)).toHaveLength(5); // Multiple instances expected (mobile + desktop + expense list)
     expect(screen.getAllByText('One-Time')).toHaveLength(1); // Only one instance expected
   });
 
@@ -308,11 +308,11 @@ describe('BudgetTime Page', () => {
 
     // Wait for calculations to update
     await waitFor(() => {
-      expect(screen.getByText(/2200\.00/)).toBeInTheDocument(); // 2500 - 300 (only Groceries showing)
+      expect(screen.getAllByText(/2200\.00/)).toHaveLength(2); // Mobile + Desktop summaries
     });
 
-    expect(screen.getByText(/Included:.*300\.00/)).toBeInTheDocument();
-    expect(screen.getByText(/Excluded:.*0\.00/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Included:.*300\.00/)).toHaveLength(2); // Mobile + Desktop
+    expect(screen.getAllByText(/Excluded:.*0\.00/)).toHaveLength(2); // Mobile + Desktop
   });
 
   it('updates calculations when expenses are excluded', async () => {
@@ -326,8 +326,9 @@ describe('BudgetTime Page', () => {
     fireEvent.click(excludeSwitch);
 
     await waitFor(() => {
-      expect(screen.getByText(/Included:.*0\.00/)).toBeInTheDocument();
-      expect(screen.getByText(/Excluded:.*300\.00/)).toBeInTheDocument();
+      // Now we have both mobile and desktop summaries, so we expect multiple instances
+      expect(screen.getAllByText(/Included:.*0\.00/)).toHaveLength(2); // Mobile + Desktop
+      expect(screen.getAllByText(/Excluded:.*300\.00/)).toHaveLength(2); // Mobile + Desktop
     });
   });
 
@@ -443,8 +444,8 @@ describe('BudgetTime Page', () => {
       expect(screen.getByText('Budget Time')).toBeInTheDocument();
     });
 
-    // Currency formatting should be applied
-    expect(screen.getAllByText(/300\.00/)).toHaveLength(3); // Multiple instances expected
+    // Currency formatting should be applied - now we have more instances due to mobile + desktop summaries
+    expect(screen.getAllByText(/300\.00/)).toHaveLength(5); // Multiple instances expected (mobile + desktop + expense list)
   });
 
   it('displays next payday information for manual periods', async () => {
