@@ -1,4 +1,4 @@
-import React from 'react';
+
 import type { RecurringFrequency } from '../types/expense';
 
 interface RecurringDateSelectorProps {

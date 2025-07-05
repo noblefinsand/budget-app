@@ -1,4 +1,4 @@
-import React from 'react';
+
 import type { Expense } from '../types/expense';
 import { formatDueDateForDisplay } from '../../utils/dateFormat';
 import { formatCurrency } from '../utils/currencyFormat';
