@@ -28,6 +28,7 @@ export default function LiveRegion({ message, type = 'polite', className = '' }:
       aria-live={type}
       aria-atomic="true"
       className={`sr-only ${className}`}
+      aria-label="Live region"
     />
   );
 } 

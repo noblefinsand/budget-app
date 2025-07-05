@@ -1,6 +1,9 @@
 import { vi } from 'vitest';
 
 export const mockProfileService = {
+  getProfile: vi.fn(),
+  updateProfile: vi.fn(),
+  getProfileById: vi.fn(),
   checkDisplayNameAvailability: vi.fn(),
   checkEmailAvailability: vi.fn(),
 };
